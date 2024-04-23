@@ -1,6 +1,6 @@
 # llm-prepare
 
-This Node.js script provides a powerful tool for processing directory structures and file contents within specified projects. It recursively scans a project directory based on provided arguments (a directory and file inclusion pattern), and constructs a simplified view of the directory layout. This is combined with the aggregated content after stripping comments and unnecessary whitespace.
+This Node.js script provides a powerful tool for processing directory structures and file contents within specified projects. It recursively scans a project directory based on provided arguments (a directory and file inclusion pattern), and constructs a simplified view of the directory layout. This is combined with the aggregated content after stripping comments and unnecessary whitespace. The output can optionally be compressed to save further tokens.
 
 ## Features
 
@@ -53,7 +53,7 @@ For Windows, ensure that Node.js is added to your PATH during the installation. 
 
 ## Usage
 
-To run the script, you need to provide two mandatory arguments: the path to the project directory (`--path-name`) and the pattern of files to include (`--files`).
+To run the script, you need to provide two mandatory arguments: the path to the project directory (`--path-name`) and the pattern of files to include (`--file-pattern`).
 
 Example:
 

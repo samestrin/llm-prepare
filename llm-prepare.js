@@ -1,107 +1,121 @@
 #!/usr/bin/env node
 
-const fs = require('fs-extra');
-const path = require('path');
-const ignore = require('ignore');
-const yargs = require('yargs/yargs');
-const { hideBin } = require('yargs/helpers');
+const fs = require("fs-extra");
+const path = require("path");
+const ignore = require("ignore");
+const yargs = require("yargs/yargs");
+const { hideBin } = require("yargs/helpers");
 
 // Set up command line arguments
 const argv = yargs(hideBin(process.argv))
-  .option('path-name', {
-    alias: 'p',
-    describe: 'Path to the project directory',
-    type: 'string',
-    demandOption: true
+  .option("path-name", {
+    alias: "p",
+    describe: "Path to the project directory",
+    type: "string",
+    demandOption: true,
   })
-  .option('files', {
-    alias: 'f',
-    describe: 'Pattern of files to include',
-    type: 'string',
-    demandOption: true
+  .option("file-pattern", {
+    alias: "f",
+    describe:
+      "Pattern of files to include, e.g., '\\.js$' or '*' for all files",
+    type: "string",
+    demandOption: true,
   })
-  .argv;
+  .option("compress", {
+    alias: "c",
+    describe: "Should we compress the output?",
+    type: "boolean",
+    demandOption: false,
+  }).argv;
+console.log(argv);
+// Store the file pattern in a variable early in the script
+const filePattern = argv.files;
+const compress = argv.compress;
 
 // Variables to hold content and layout
-let singleFileOutput = '';
-let layout = '';
+let singleFileOutput = "";
+let layout = "";
 
-/**
- * Reads .ignore files from a given directory and constructs an ignore object to manage ignored files.
- *
- * @param {string} dir - Directory to search for .ignore files
- * @returns {Promise<ignore>} The ignore object with the loaded ignore rules
- * @throws {Error} If reading from the directory fails
- *
- * @example
- * readIgnoreFiles('/path/to/dir').then(ig => console.log('Ignore object created'));
- */
 async function readIgnoreFiles(dir) {
+  const ig = ignore();
+  ig.add(".git"); // Ignore .git folder
   try {
-    const ig = ignore();
-    const ignoreFiles = await fs.readdir(dir);
-    ignoreFiles.filter(file => file.endsWith('.ignore')).forEach(file => {
-      const ignoreContent = fs.readFileSync(path.join(dir, file)).toString();
-      ig.add(ignoreContent.split('\n'));
-    });
-    return ig;
+    const files = await fs.readdir(dir);
+    const ignoreFiles = files.filter((file) => file.endsWith(".ignore"));
+
+    await Promise.all(
+      ignoreFiles.map(async (file) => {
+        const content = await fs.readFile(path.join(dir, file), "utf8");
+        ig.add(content);
+      })
+    );
   } catch (error) {
-    throw new Error('Failed to read ignore files: ' + error.message);
+    console.error("Error reading ignore files: ", error);
   }
+  return ig;
 }
 
-/**
- * Recursively processes directories to build a file layout and accumulate file contents based on specified file patterns.
- *
- * @param {string} dir - Directory to process
- * @param {string} [baseDir=dir] - Base directory for relative path calculations
- * @returns {Promise<void>}
- * @throws {Error} If directory traversal or file operations fail
- *
- * @example
- * processDirectory('/path/to/project', '/path/to').catch(console.error);
- */
-async function processDirectory(dir, baseDir = dir) {
+async function processDirectory(dir, baseDir = dir, ig) {
   try {
-    const ig = await readIgnoreFiles(dir);
     const entries = await fs.readdir(dir);
-    const ignoredEntries = ig.filter(entries);
-    for (const entry of ignoredEntries) {
+    const notIgnoredEntries = ig.filter(entries);
+    console.log(
+      `Processing directory: ${dir}, entries found: ${notIgnoredEntries.join(
+        ", "
+      )}`
+    ); // Debug log
+
+    for (const entry of notIgnoredEntries) {
       const entryPath = path.join(dir, entry);
       const stats = await fs.stat(entryPath);
       if (stats.isDirectory()) {
-        layout += '│   '.repeat(dir.split(path.sep).length - baseDir.split(path.sep).length) + '├── ' + entry + '/\n';
-        await processDirectory(entryPath, baseDir);
-      } else if (stats.isFile() && entry.match(argv.files)) {
-        layout += '│   '.repeat(dir.split(path.sep).length - baseDir.split(path.sep).length) + '└── ' + entry + '\n';
-        let content = await fs.readFile(entryPath, 'utf8');
-        content = content.replace(/\/\/.*|\/\*[\s\S]*?\*\//g, ''); // Remove JS comments
-        content = content.replace(/\s+/g, ' '); // Reduce whitespace
-        singleFileOutput += `// File: ${path.relative(baseDir, entryPath)}\n` + content + '\n\n';
+        layout +=
+          "│   ".repeat(
+            dir.split(path.sep).length - baseDir.split(path.sep).length
+          ) +
+          "├── " +
+          entry +
+          "/\n";
+        await processDirectory(entryPath, baseDir, ig);
+      } else if (stats.isFile()) {
+        console.log(`Checking file: ${entry} against pattern: ${filePattern}`); // Debug log
+        let pattern = filePattern === "*" ? ".*" : filePattern; // Convert '*' to a regex that matches any string
+        if (entry.match(new RegExp(pattern))) {
+          layout +=
+            "│   ".repeat(
+              dir.split(path.sep).length - baseDir.split(path.sep).length
+            ) +
+            "└── " +
+            entry +
+            "\n";
+          let content = await fs.readFile(entryPath, "utf8");
+          content = content.replace(/\/\/.*|\/\*[\s\S]*?\*\//g, ""); // Remove comments
+          content = content.replace(/[ \t]+/g, " "); // Normalize spaces and tabs to single space
+
+          if (compress) {
+            content = content.replace(/\s+/g, " ").trim(); // Normalize whitespace
+          } else {
+            content = content.replace(/(?:\r\n|\r|\n){2,}/g, "\n"); // Condense multiple newlines to a single newline}
+          }
+          singleFileOutput +=
+            `// File: ${path.relative(baseDir, entryPath)}\n` + content + "\n";
+        }
       }
     }
   } catch (error) {
-    throw new Error('Failed to process directory: ' + error.message);
+    console.error("Error processing directory: ", error);
   }
 }
 
-/**
- * Main function to initiate directory processing based on command line arguments.
- *
- * @returns {Promise<void>}
- * @throws {Error} If the main process fails
- *
- * @example
- * main().catch(console.error);
- */
 async function main() {
   try {
-    layout += '/' + path.basename(argv['path-name']) + '\n';
-    await processDirectory(argv['path-name']);
-    singleFileOutput = layout + singleFileOutput;
+    const ig = await readIgnoreFiles(argv["path-name"]);
+    layout += "/" + path.basename(argv["path-name"]) + "\n";
+    await processDirectory(argv["path-name"], argv["path-name"], ig);
+    singleFileOutput = layout + "\n" + singleFileOutput;
     console.log(singleFileOutput);
   } catch (error) {
-    console.error('Error during main execution: ' + error.message);
+    console.error("Error during main execution: ", error);
   }
 }
 
