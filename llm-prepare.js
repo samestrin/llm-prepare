@@ -27,7 +27,7 @@ const argv = yargs(hideBin(process.argv))
     type: "boolean",
     demandOption: false,
   }).argv;
-console.log(argv);
+
 // Store the file pattern in a variable early in the script
 const filePattern = argv.files;
 const compress = argv.compress;
@@ -60,11 +60,6 @@ async function processDirectory(dir, baseDir = dir, ig) {
   try {
     const entries = await fs.readdir(dir);
     const notIgnoredEntries = ig.filter(entries);
-    console.log(
-      `Processing directory: ${dir}, entries found: ${notIgnoredEntries.join(
-        ", "
-      )}`
-    ); // Debug log
 
     for (const entry of notIgnoredEntries) {
       const entryPath = path.join(dir, entry);
@@ -79,7 +74,6 @@ async function processDirectory(dir, baseDir = dir, ig) {
           "/\n";
         await processDirectory(entryPath, baseDir, ig);
       } else if (stats.isFile()) {
-        console.log(`Checking file: ${entry} against pattern: ${filePattern}`); // Debug log
         let pattern = filePattern === "*" ? ".*" : filePattern; // Convert '*' to a regex that matches any string
         if (entry.match(new RegExp(pattern))) {
           layout +=
