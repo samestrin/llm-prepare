@@ -29,8 +29,9 @@ const argv = yargs(hideBin(process.argv))
 
 // Compile file pattern only once
 const filePattern = new RegExp(
-  argv["file-pattern"] === "*" ? ".*" : argv["file-pattern"]
+  argv.filePattern === "*" ? ".*" : argv.filePattern
 );
+
 const compress = argv.compress;
 let singleFileOutput = ""; // Declare singleFileOutput at the top level
 
@@ -47,6 +48,7 @@ async function readIgnoreFiles(dir) {
   const ig = ignore();
   ig.add(".git"); // Ignore .git folder
   ig.add(".gitignore"); // Ignore .gitignore file
+  ig.add("vendor"); // Ignore .gitignore file
   try {
     const files = await fs.readdir(dir);
     const ignoreFiles = files.filter((file) => file.match(/\..*ignore/));
@@ -93,6 +95,8 @@ async function processDirectory(dir, baseDir = dir, ig) {
           "/\n";
         await processDirectory(entryPath, baseDir, ig);
       } else if (stats.isFile() && entry.match(filePattern)) {
+        console.log(`Checking file: ${entry} against pattern: ${filePattern}`); // Debug log
+
         layout +=
           "│   ".repeat(
             dir.split(path.sep).length - baseDir.split(path.sep).length
