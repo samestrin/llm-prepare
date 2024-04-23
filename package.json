@@ -1,6 +1,6 @@
 {
   "name": "llm-prepare",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "A CLI node application that converts multi-directory/multi-projects into a single file for LLM processing.",
   "main": "index.js",
   "scripts": {
