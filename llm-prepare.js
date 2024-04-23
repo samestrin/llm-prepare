@@ -92,8 +92,18 @@ async function processDirectory(dir, baseDir = dir, ig) {
           } else {
             content = content.replace(/(?:\r\n|\r|\n){2,}/g, "\n"); // Condense multiple newlines to a single newline}
           }
+          // Enhanced file comment format
           singleFileOutput +=
-            `// File: ${path.relative(baseDir, entryPath)}\n` + content + "\n";
+            `
+
+/** File: ${path.relative(
+              baseDir,
+              entryPath
+            )} ***************************************/
+
+` +
+            content +
+            "\n";
         }
       }
     }
