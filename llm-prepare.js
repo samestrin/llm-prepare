@@ -39,6 +39,7 @@ let layout = "";
 async function readIgnoreFiles(dir) {
   const ig = ignore();
   ig.add(".git"); // Ignore .git folder
+  ig.add(".gitignore"); // Ignore .gitignore file
   try {
     const files = await fs.readdir(dir);
     const ignoreFiles = files.filter((file) => file.endsWith(".ignore"));
