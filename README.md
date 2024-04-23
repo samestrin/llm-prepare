@@ -58,7 +58,7 @@ To run the script, you need to provide two mandatory arguments: the path to the 
 Example:
 
 ```bash
-llm-prepare --path-name /path/to/project --files "*.js"
+llm-prepare --path-name "/path/to/project" --files "*.js"
 ```
 
 This will process all JavaScript files in the specified project directory, respecting any `.ignore` files, and output the consolidated content and structure to your console.

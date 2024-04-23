@@ -4,6 +4,7 @@ const path = require("path");
 const ignore = require("ignore");
 const yargs = require("yargs/yargs");
 const { hideBin } = require("yargs/helpers");
+const packageJson = require("./package.json"); // Assuming package.json is in the same directory as your script
 
 // Set up command line arguments
 const argv = yargs(hideBin(process.argv))
@@ -25,13 +26,14 @@ const argv = yargs(hideBin(process.argv))
     describe: "Should we compress the output?",
     type: "boolean",
     demandOption: false,
-  }).argv;
+  })
+  .version("v", "Display the version number", packageJson.version) // Adding version command
+  .alias("v", "version").argv;
 
 // Compile file pattern only once
 const filePattern = new RegExp(
   argv.filePattern === "*" ? ".*" : argv.filePattern
 );
-
 const compress = argv.compress;
 let singleFileOutput = ""; // Declare singleFileOutput at the top level
 
@@ -95,8 +97,6 @@ async function processDirectory(dir, baseDir = dir, ig) {
           "/\n";
         await processDirectory(entryPath, baseDir, ig);
       } else if (stats.isFile() && entry.match(filePattern)) {
-        console.log(`Checking file: ${entry} against pattern: ${filePattern}`); // Debug log
-
         layout +=
           "│   ".repeat(
             dir.split(path.sep).length - baseDir.split(path.sep).length
