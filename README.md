@@ -1,6 +1,6 @@
 # llm-prepare
 
-This Node.js script provides a tool for processing directory structures and file contents within specified projects. It recursively scans a project directory based on provided arguments (a directory and file inclusion pattern), and constructs a simplified view of the directory layout. This is combined with the aggregated content after stripping comments and unnecessary whitespace. The output can optionally be compressed to save further tokens.
+This Node.js script is a tool for processing directory structures and file contents within specified projects. It recursively scans a project directory based on provided arguments (a directory and file inclusion pattern), and constructs a simplified view of the directory layout. This is combined with the aggregated content after stripping comments and unnecessary whitespace. The output can optionally be compressed to save further tokens.
 
 ## Features
 
