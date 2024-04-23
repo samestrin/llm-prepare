@@ -32,6 +32,7 @@ const filePattern = new RegExp(
   argv["file-pattern"] === "*" ? ".*" : argv["file-pattern"]
 );
 const compress = argv.compress;
+let singleFileOutput = ""; // Declare singleFileOutput at the top level
 
 /**
  * Reads ignore files from the specified directory and constructs an ignore object.
@@ -77,6 +78,7 @@ async function processDirectory(dir, baseDir = dir, ig) {
   try {
     const entries = await fs.readdir(dir);
     const notIgnoredEntries = ig.filter(entries);
+    let layout = "";
 
     for (const entry of notIgnoredEntries) {
       const entryPath = path.join(dir, entry);
@@ -130,6 +132,8 @@ async function processDirectory(dir, baseDir = dir, ig) {
  */
 
 async function main() {
+  let layout = "";
+
   try {
     const ig = await readIgnoreFiles(argv["path-name"]);
     layout += "/" + path.basename(argv["path-name"]) + "\n";
