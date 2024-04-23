@@ -33,10 +33,11 @@ npm install fs-extra ignore yargs yargs/helpers
 
 To use the script from any location on your system, you need to install it globally. You can do this using npm.
 
-1. Run the following command in your project directory:
-   ```bash
-   npm link
-   ```
+Run the following command in your project directory:
+
+```bash
+npm link
+```
 
 This will create a global symlink to your script. Now, you can run the script using `llm-prepare` from anywhere in your terminal.
 
