@@ -66,7 +66,6 @@ This will process all JavaScript files in the specified project directory, respe
 ## Options
 
 ```
-Options:
       --help             Show help                                     [boolean]
   -p, --path-name        Path to the project directory       [string] [required]
   -f, --file-pattern     Pattern of files to include, e.g., '\.js$' or '*' for
