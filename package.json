@@ -13,5 +13,8 @@
     "fs-extra": "^11.2.0",
     "ignore": "^5.3.1",
     "yargs": "^17.7.2"
+  },
+  "bin": {
+    "llm-prepare": "./llm-prepare.js"
   }
 }
