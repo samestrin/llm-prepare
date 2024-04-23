@@ -36,6 +36,7 @@ const filePattern = new RegExp(
 );
 const compress = argv.compress;
 let singleFileOutput = ""; // Declare singleFileOutput at the top level
+let layout = "";
 
 /**
  * Reads ignore files from the specified directory and constructs an ignore object.
@@ -50,7 +51,11 @@ async function readIgnoreFiles(dir) {
   const ig = ignore();
   ig.add(".git"); // Ignore .git folder
   ig.add(".gitignore"); // Ignore .gitignore file
-  ig.add("vendor"); // Ignore .gitignore file
+  ig.add("vendor"); // Ignore vendor directory
+  ig.add("*.lock"); // Ignore composer.lock files
+  ig.add("npm-shrinkwrap.json"); // Ignore npm-shrinkwrap.json file
+  ig.add("package-lock.json"); // Ignore package-lock.json" file
+
   try {
     const files = await fs.readdir(dir);
     const ignoreFiles = files.filter((file) => file.match(/\..*ignore/));
@@ -82,7 +87,6 @@ async function processDirectory(dir, baseDir = dir, ig) {
   try {
     const entries = await fs.readdir(dir);
     const notIgnoredEntries = ig.filter(entries);
-    let layout = "";
 
     for (const entry of notIgnoredEntries) {
       const entryPath = path.join(dir, entry);
@@ -136,8 +140,6 @@ async function processDirectory(dir, baseDir = dir, ig) {
  */
 
 async function main() {
-  let layout = "";
-
   try {
     const ig = await readIgnoreFiles(argv["path-name"]);
     layout += "/" + path.basename(argv["path-name"]) + "\n";
