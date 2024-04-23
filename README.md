@@ -63,6 +63,20 @@ llm-prepare --path-name "/path/to/project" --file-pattern "*.js"
 
 This will process all JavaScript files in the specified project directory, respecting any `.ignore` files, and output the consolidated content and structure to your console.
 
+## Options
+
+```
+Options:
+      --help             Show help                                     [boolean]
+  -p, --path-name        Path to the project directory       [string] [required]
+  -f, --file-pattern     Pattern of files to include, e.g., '\.js$' or '*' for
+                         all files                           [string] [required]
+  -c, --compress         Should we compress the output?                [boolean]
+  -o, --output-filename  Filename to write output to instead of printing to
+                         console                                        [string]
+  -v, --version          Display the version number                    [boolean]
+```
+
 ## Contributing
 
 Contributions to this project are welcome. Please fork the repository and submit a pull request with your changes or improvements.

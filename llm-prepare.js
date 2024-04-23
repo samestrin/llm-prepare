@@ -27,6 +27,12 @@ const argv = yargs(hideBin(process.argv))
     type: "boolean",
     demandOption: false,
   })
+  .option("output-filename", {
+    alias: "o",
+    describe: "Filename to write output to instead of printing to console",
+    type: "string",
+    demandOption: false,
+  })
   .version("v", "Display the version number", packageJson.version) // Adding version command
   .alias("v", "version").argv;
 
@@ -145,7 +151,13 @@ async function main() {
     layout += "/" + path.basename(argv["path-name"]) + "\n";
     await processDirectory(argv["path-name"], argv["path-name"], ig);
     singleFileOutput = layout + "\n" + singleFileOutput;
-    console.log(singleFileOutput);
+
+    if (argv.outputFilename) {
+      await fs.writeFile(argv.outputFilename, singleFileOutput, "utf8");
+      console.log(`Output written to ${argv.outputFilename}`);
+    } else {
+      console.log(singleFileOutput);
+    }
   } catch (error) {
     console.error(`Main execution error: ${error.message}`);
   }
