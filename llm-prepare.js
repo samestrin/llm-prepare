@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-
 const fs = require("fs-extra");
 const path = require("path");
 const ignore = require("ignore");
@@ -28,13 +27,20 @@ const argv = yargs(hideBin(process.argv))
     demandOption: false,
   }).argv;
 
-// Store the file pattern in a variable early in the script
-const filePattern = argv.files;
+// Compile file pattern only once
+const filePattern = new RegExp(
+  argv["file-pattern"] === "*" ? ".*" : argv["file-pattern"]
+);
 const compress = argv.compress;
 
-// Variables to hold content and layout
-let singleFileOutput = "";
-let layout = "";
+/**
+ * Reads ignore files from the specified directory and constructs an ignore object.
+ * This function adds default ignores for .git and .gitignore files.
+ *
+ * @param {string} dir - The directory from which to read ignore files.
+ * @returns {Promise<ignore>} The constructed ignore object with added rules.
+ * @throws {Error} If reading the directory or files fails.
+ */
 
 async function readIgnoreFiles(dir) {
   const ig = ignore();
@@ -42,8 +48,7 @@ async function readIgnoreFiles(dir) {
   ig.add(".gitignore"); // Ignore .gitignore file
   try {
     const files = await fs.readdir(dir);
-    const ignoreFiles = files.filter((file) => file.endsWith(".ignore"));
-
+    const ignoreFiles = files.filter((file) => file.match(/\..*ignore/));
     await Promise.all(
       ignoreFiles.map(async (file) => {
         const content = await fs.readFile(path.join(dir, file), "utf8");
@@ -51,10 +56,22 @@ async function readIgnoreFiles(dir) {
       })
     );
   } catch (error) {
-    console.error("Error reading ignore files: ", error);
+    throw new Error(
+      `Failed to read ignore files in directory ${dir}: ${error.message}`
+    );
   }
   return ig;
 }
+
+/**
+ * Processes the directory for files matching the pattern and constructs an output string.
+ *
+ * @param {string} dir - Current directory to process.
+ * @param {string} baseDir - Base directory to maintain relative path structure.
+ * @param {ignore} ig - Ignore object to filter directory entries.
+ * @returns {Promise<void>}
+ * @throws {Error} If processing the directory fails.
+ */
 
 async function processDirectory(dir, baseDir = dir, ig) {
   try {
@@ -73,44 +90,44 @@ async function processDirectory(dir, baseDir = dir, ig) {
           entry +
           "/\n";
         await processDirectory(entryPath, baseDir, ig);
-      } else if (stats.isFile()) {
-        let pattern = filePattern === "*" ? ".*" : filePattern; // Convert '*' to a regex that matches any string
-        if (entry.match(new RegExp(pattern))) {
-          layout +=
-            "│   ".repeat(
-              dir.split(path.sep).length - baseDir.split(path.sep).length
-            ) +
-            "└── " +
-            entry +
-            "\n";
-          let content = await fs.readFile(entryPath, "utf8");
-          content = content.replace(/\/\/.*|\/\*[\s\S]*?\*\//g, ""); // Remove comments
-          content = content.replace(/[ \t]+/g, " "); // Normalize spaces and tabs to single space
+      } else if (stats.isFile() && entry.match(filePattern)) {
+        layout +=
+          "│   ".repeat(
+            dir.split(path.sep).length - baseDir.split(path.sep).length
+          ) +
+          "└── " +
+          entry +
+          "\n";
+        let content = await fs.readFile(entryPath, "utf8");
+        content = content.replace(/\/\/.*|\/\*[\s\S]*?\*\//g, ""); // Remove comments
+        content = content.replace(/[ \t]+/g, " "); // Normalize spaces and tabs to single space
 
-          if (compress) {
-            content = content.replace(/\s+/g, " ").trim(); // Normalize whitespace
-          } else {
-            content = content.replace(/(?:\r\n|\r|\n){2,}/g, "\n"); // Condense multiple newlines to a single newline}
-          }
-          // Enhanced file comment format
-          singleFileOutput +=
-            `
+        if (compress) {
+          content = content.replace(/\s+/g, " ").trim(); // Normalize whitespace
+        } else {
+          content = content.replace(/(?:\r\n|\r|\n){2,}/g, "\n"); // Condense multiple newlines to a single newline}
+        }
+        singleFileOutput +=
+          `
 
 /** File: ${path.relative(
-              baseDir,
-              entryPath
-            )} ***************************************/
+            baseDir,
+            entryPath
+          )} ***************************************/
 
 ` +
-            content +
-            "\n";
-        }
+          content +
+          "\n";
       }
     }
   } catch (error) {
-    console.error("Error processing directory: ", error);
+    throw new Error(`Failed to process directory ${dir}: ${error.message}`);
   }
 }
+
+/**
+ * Main function to execute the directory processing.
+ */
 
 async function main() {
   try {
@@ -120,8 +137,8 @@ async function main() {
     singleFileOutput = layout + "\n" + singleFileOutput;
     console.log(singleFileOutput);
   } catch (error) {
-    console.error("Error during main execution: ", error);
+    console.error(`Main execution error: ${error.message}`);
   }
 }
 
-main().catch(console.error);
+main().catch((error) => console.error(`Unhandled error: ${error.message}`));
