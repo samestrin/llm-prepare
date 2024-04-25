@@ -36,9 +36,14 @@ const argv = yargs(hideBin(process.argv))
   .version("v", "Display the version number", packageJson.version) // Adding version command
   .alias("v", "version").argv;
 
-// Compile file pattern only once
+// Safely escape special characters and convert wildcard * to .*
+const escapeRegExp = (string) => string.replace(/[.+?^${}()|[\]\\]/g, "\\$&");
+const convertWildcard = (pattern) => pattern.replace(/\*/g, ".*");
+
 const filePattern = new RegExp(
-  argv.filePattern === "*" ? ".*" : argv.filePattern
+  argv.filePattern === "*"
+    ? ".*"
+    : convertWildcard(escapeRegExp(argv.filePattern))
 );
 const compress = argv.compress;
 let singleFileOutput = ""; // Declare singleFileOutput at the top level
@@ -59,9 +64,8 @@ async function readIgnoreFiles(dir) {
   ig.add(".gitignore"); // Ignore .gitignore file
   ig.add("vendor"); // Ignore vendor directory
   ig.add("node_modules"); // Ignore vendor directory
-  ig.add("*.lock"); // Ignore composer.lock files
-  ig.add("npm-shrinkwrap.json"); // Ignore npm-shrinkwrap.json file
-  ig.add("package-lock.json"); // Ignore package-lock.json" file
+  ig.add("*.lock"); // Ignore *.lock files
+  ig.add("*.json"); // Ignore *.json files
 
   try {
     const files = await fs.readdir(dir);
@@ -108,6 +112,9 @@ async function processDirectory(dir, baseDir = dir, ig) {
           "/\n";
         await processDirectory(entryPath, baseDir, ig);
       } else if (stats.isFile() && entry.match(filePattern)) {
+        let content = await fs.readFile(entryPath, "utf8");
+        if (content.trim().length === 0) continue; // Skip empty files
+
         layout +=
           "│   ".repeat(
             dir.split(path.sep).length - baseDir.split(path.sep).length
@@ -115,7 +122,7 @@ async function processDirectory(dir, baseDir = dir, ig) {
           "└── " +
           entry +
           "\n";
-        let content = await fs.readFile(entryPath, "utf8");
+
         content = content.replace(/\/\/.*|\/\*[\s\S]*?\*\//g, ""); // Remove comments
         content = content.replace(/[ \t]+/g, " "); // Normalize spaces and tabs to single space
 
