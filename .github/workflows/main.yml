@@ -22,3 +22,5 @@ jobs:
           git add README.md
           git commit -m "Update version badge"
           git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
