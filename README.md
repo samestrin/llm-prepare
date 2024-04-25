@@ -1,6 +1,6 @@
 # llm-prepare
 
-**llm-prepare** converts complex project directory structures and file contents into a flat file or set of flat files. It recursively scans a project directory based on provided arguments (at least a directory and file inclusion pattern), and constructs a simplified view of the directory layout. This is combined with the aggregated content after stripping comments (by default) and unnecessary whitespace. The output can optionally be compressed to save further tokens.
+**llm-prepare** converts complex project directory structures and file contents into a single flat or set of flat files. It recursively scans a project directory based on provided arguments (at least a directory and file inclusion pattern). Then, it constructs a simplified layout view that includes all directories and file matches. The tool then combines the layout view with the aggregated file content of the entire project. The aggregated file content is stripped of comments and unnecessary whitespace by default. Output compression is also supported to reduce token use.
 
 ## Features
 
