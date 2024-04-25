@@ -66,6 +66,7 @@ const argv = yargs(hideBin(process.argv))
 // Initialize variables
 let singleFileOutput = [];
 let layout = "";
+let layoutIncluded = false;
 let currentChunkSize = 0;
 let outputFileCounter = 1;
 
@@ -93,21 +94,13 @@ function handleError(error) {
  * based on provided command line arguments
  */
 async function main() {
-  try {
-    const ig = await readIgnoreFiles(argv["path-name"]);
-    if (!argv["suppress-layout"]) {
-      layout += "/" + path.basename(argv["path-name"]) + "\n";
-    }
-    await processDirectory(argv["path-name"], argv["path-name"], ig);
-    singleFileOutput = argv["suppress-layout"]
-      ? singleFileOutput
-      : layout + "\n" + singleFileOutput.join("");
-
-    // Final output write
-    await writeOutput(singleFileOutput.join(""));
-  } catch (error) {
-    handleError(error);
+  const ig = await readIgnoreFiles(argv["path-name"]);
+  if (!argv["suppress-layout"]) {
+    // Initialize layout only if not suppressed
+    layout = "/" + path.basename(argv["path-name"]) + "\n"; // Setting the initial layout
   }
+  await processDirectory(argv["path-name"], argv["path-name"], ig);
+  await finalizeOutput(); // Final output handling moved to a separate function
 }
 
 /**
@@ -187,110 +180,182 @@ async function fileExists(filePath) {
 
 /**
  * Processes a directory recursively, applying ignore rules and preparing content for output
+ * while generating an ASCII layout of the directory structure.
  *
  * @param {string} dir - The current directory to process
  * @param {string} [baseDir=dir] - The base directory of the processing to maintain relative paths
  * @param {object} ig - The ignore manager with rules to apply
+ * @param {number} [depth=0] - The current depth in the directory tree
+ * @param {Array} lastItemStack - Tracks if the current item is the last in each directory level
  */
-async function processDirectory(dir, baseDir = dir, ig) {
-  try {
-    // Check if the directory exists to avoid ENOENT error
-    const dirExists = await fs.pathExists(dir);
-    if (!dirExists) {
-      console.error(`Directory does not exist: ${dir}`);
-      return; // Exit the function if directory does not exist
-    }
+async function processDirectory(
+  dir,
+  baseDir = dir,
+  ig,
+  depth = 0,
+  lastItemStack = []
+) {
+  const dirExists = await fs.pathExists(dir);
+  if (!dirExists) {
+    console.error(`Directory does not exist: ${dir}`);
+    return; // Exit if directory does not exist
+  }
 
-    const entries = await fs.readdir(dir);
-    const notIgnoredEntries = ig.filter(entries);
+  const entries = await fs.readdir(dir);
+  const notIgnoredEntries = ig.filter(entries).sort(); // Sort for consistent output
 
-    for (const entry of notIgnoredEntries) {
-      const entryPath = path.join(dir, entry);
-      const stats = await fs.stat(entryPath);
-      if (stats.isDirectory()) {
-        if (!argv["suppress-layout"]) {
-          layout +=
-            "│   ".repeat(
-              dir.split(path.sep).length - baseDir.split(path.sep).length
-            ) +
-            "├── " +
-            entry +
-            "/\n";
-        }
-        await processDirectory(entryPath, baseDir, ig);
-      } else if (stats.isFile() && entry.match(filePattern)) {
-        let content = await fs.readFile(entryPath, "utf8");
-        if (content.trim().length === 0) continue; // Skip empty files
+  // Update lastItemStack for current depth
+  lastItemStack[depth] = false; // Reset current depth status
 
-        let fileHeader =
-          "│   ".repeat(
-            dir.split(path.sep).length - baseDir.split(path.sep).length
-          ) +
-          "└── " +
-          entry +
-          "\n";
+  // Process each entry in the directory
+  for (let i = 0; i < notIgnoredEntries.length; i++) {
+    lastItemStack[depth] = i === notIgnoredEntries.length - 1; // Update last item status at current depth
 
-        if (!argv["include-comments"]) {
-          content = content.replace(/\/\/.*|\/\*[\s\S]*?\*\//g, ""); // Remove comments
-        }
+    const entry = notIgnoredEntries[i];
+    const entryPath = path.join(dir, entry);
+    const stats = await fs.stat(entryPath);
 
-        content = content.replace(/[ \t]+/g, " "); // Normalize spaces and tabs
-
-        if (argv["compress"]) {
-          content = content.replace(/\s+/g, " ").trim(); // Compress whitespace
-        } else {
-          content = content.replace(/(?:\r\n|\r|\n){2,}/g, "\n"); // Condense newlines
-        }
-
-        let fileContent =
-          `
-
-/** File: ${path.relative(
-            baseDir,
-            entryPath
-          )} ***************************************/
-
-` +
-          content +
-          "\n";
-
-        // Check if adding this file exceeds the chunk size, if chunk-size is set
-        if (
-          argv["chunk-size"] &&
-          currentChunkSize + fileContent.length > argv["chunk-size"] * 1024
-        ) {
-          await writeOutput(singleFileOutput.join("")); // Write current output to a file
-          singleFileOutput = []; // Reset for new file
-          currentChunkSize = 0; // Reset size counter
-        }
-
-        singleFileOutput.push(fileHeader + fileContent);
-        currentChunkSize += fileHeader.length + fileContent.length;
+    // Build prefix with adjusted layout for last items
+    let prefix = "";
+    for (let j = 0; j <= depth; j++) {
+      if (j == depth) {
+        // Current depth, decide based on lastItemStack
+        prefix += lastItemStack[j] ? "└── " : "├── ";
+      } else {
+        prefix += lastItemStack[j] ? "    " : "│   ";
       }
     }
-  } catch (error) {
-    throw new Error(`Failed to process directory ${dir}: ${error.message}`);
+
+    if (stats.isDirectory()) {
+      // Append directory to layout
+      layout += prefix + entry + "/\n";
+      // Recursive call to process subdirectory
+      await processDirectory(entryPath, baseDir, ig, depth + 1, lastItemStack);
+    } else if (stats.isFile() && entry.match(filePattern)) {
+      // Append file to layout
+      layout += prefix + entry + "\n";
+
+      let content = await fs.readFile(entryPath, "utf8");
+      if (content.trim().length === 0) continue; // Skip empty files
+
+      if (!argv["include-comments"]) {
+        content = content.replace(/\/\*[\s\S]*?\*\//g, ""); // Remove block comments
+        content = content.replace(/\/\/.*$/gm, ""); // Remove single-line comments
+      }
+
+      content = content.replace(/[ \t]+/g, " "); // Normalize spaces and tabs
+
+      if (argv["compress"]) {
+        content = content.replace(/\s+/g, " ").trim(); // Compress whitespace
+      } else {
+        content = content.replace(/(?:\r\n|\r|\n){2,}/g, "\n"); // Condense newlines
+      }
+
+      let fileContent =
+        `
+
+/** File: ${path.relative(
+          baseDir,
+          entryPath
+        )} ***************************************/
+
+` +
+        content +
+        "\n";
+
+      // Handle output logic based on chunk size, if specified
+      if (
+        argv["chunk-size"] &&
+        currentChunkSize + fileContent.length > argv["chunk-size"] * 1024
+      ) {
+        await writeOutput(singleFileOutput.join(""));
+        singleFileOutput = [];
+        currentChunkSize = 0;
+      }
+
+      singleFileOutput.push(fileContent);
+      currentChunkSize += fileContent.length;
+    }
   }
 }
 
 /**
- * Writes processed output to a file or console based on user configuration
+ * Manages layout display in output
  *
  * @param {string} output - The content to write out
  */
+async function finalizeOutput() {
+  let finalOutput = "";
+  // Check if layout has not been included and it is not supposed to be suppressed
+  if (!layoutIncluded && !argv["suppress-layout"]) {
+    finalOutput += layout + "\n";
+    layoutIncluded = true; // Set the flag as true after including layout
+  }
+  finalOutput += singleFileOutput.join("\n");
+  await writeOutput(finalOutput);
+}
+
+/**
+ * Writes processed output to a file or console based on user configuration.
+ * Includes error handling to catch and report any issues during the file write process.
+ *
+ * @param {string} output - The content to write out.
+ */
 async function writeOutput(output) {
-  if (argv.outputFilename) {
-    let filename = argv.outputFilename;
-    if (outputFileCounter > 1) {
-      const extension = path.extname(filename);
-      const baseName = filename.slice(0, -extension.length);
-      filename = `${baseName}.${outputFileCounter}${extension}`;
+  try {
+    if (
+      argv["chunk-size"] &&
+      currentChunkSize + output.length > argv["chunk-size"] * 1024
+    ) {
+      // Output exceeds chunk size, write current buffer and reset
+      await writeChunkOutput(singleFileOutput.join(""));
+      singleFileOutput = []; // Clear the buffer after writing
+      currentChunkSize = 0;
+      // Append remaining output to a new single file output
+      singleFileOutput.push(output);
+      currentChunkSize += output.length;
+    } else {
+      // Chunk size is not exceeded, just add to current buffer
+      singleFileOutput.push(output);
+      currentChunkSize += output.length;
     }
-    await fs.writeFile(filename, output, "utf8");
-    console.log(`Output written to ${filename}`);
-    outputFileCounter++;
-  } else {
-    console.log(output);
+  } catch (error) {
+    // Handle any errors that may occur during output processing
+    console.error("Error processing output: ", error);
+  }
+}
+
+/**
+ * Writes chunked processed output to a file or console based on user configuration.
+ * Includes error handling to catch and report any issues during the file write process.
+ *
+ * @param {string} output - The content to write out.
+ */
+async function writeChunkOutput(output) {
+  output = output.trim();
+
+  try {
+    // Determine the filename or use console output
+    if (argv["output-filename"]) {
+      // Construct the filename with potential chunk numbering
+      let filename = argv["output-filename"];
+      if (outputFileCounter > 1) {
+        // Append a chunk number to the filename if multiple chunks are needed
+        const extension = path.extname(filename);
+        const baseName = filename.slice(0, -extension.length);
+        filename = `${baseName}.${outputFileCounter}${extension}`;
+      }
+      await fs.writeFile(filename, output, "utf8");
+      console.log(`Output written to ${filename}`);
+      outputFileCounter++; // Increment the file counter for the next potential chunk
+    } else {
+      // If no filename provided, output to console
+      console.log(output);
+    }
+  } catch (error) {
+    // Log the error and rethrow to ensure it's caught by calling functions
+    console.error("Error writing output to file: ", error);
+    throw new Error(`Failed to write output to file due to: ${error.message}`);
   }
 }
 
