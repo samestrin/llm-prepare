@@ -1,13 +1,20 @@
 # llm-prepare
 
-This Node.js script is a tool for processing directory structures and file contents within specified projects. It recursively scans a project directory based on provided arguments (a directory and file inclusion pattern), and constructs a simplified view of the directory layout. This is combined with the aggregated content after stripping comments and unnecessary whitespace. The output can optionally be compressed to save further tokens.
+This Node.js script converts complex project directory structures and file contents into a flat file or set of flat files. It recursively scans a project directory based on provided arguments (at least a directory and file inclusion pattern), and constructs a simplified view of the directory layout. This is combined with the aggregated content after stripping comments (by default) and unnecessary whitespace. The output can optionally be compressed to save further tokens.
 
 ## Features
 
+- **Layout View**: Provides a layout view of your project.
 - **Directory Traversal**: Recursively scan through the project directory.
 - **Custom File Filtering**: Include files based on specified patterns.
 - **Ignore Support**: Automatically respects `.ignore` files to exclude certain files or directories.
-- **Output Consolidation**: Generates a consolidated view of file contents and directory structure.
+- **Output Consolidation**: Generates a single flat file consolidated view of file contents and directory structure.
+
+## New Features
+
+- **Multifile Output**: Generates multiples flat files from a consolidated view of file contents and directory structure based on a provided chunk size.
+- **Optionally Remove Layout View**: Optionally remove the layout view from the output.
+- **Optionally Include Comments**: Optionally include comments in the output.
 
 ## Dependencies
 
