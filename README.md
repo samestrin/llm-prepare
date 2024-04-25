@@ -9,9 +9,6 @@
 - **Custom File Filtering**: Include files based on specified patterns.
 - **Ignore Support**: Automatically respects `.ignore` files to exclude certain files or directories.
 - **Output Consolidation**: Generates a single flat file consolidated view of file contents and directory structure.
-
-## New Features
-
 - **Multifile Output**: Generates multiples flat files from a consolidated view of file contents and directory structure based on a provided chunk size.
 - **Optionally Remove Layout View**: Optionally remove the layout view from the output.
 - **Optionally Include Comments**: Optionally include comments in the output.
