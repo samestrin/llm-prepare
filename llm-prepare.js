@@ -230,8 +230,9 @@ async function processDirectory(
       // Append directory to layout
       layout += prefix + entry + "/\n";
       // Recursive call to process subdirectory
+
       await processDirectory(entryPath, baseDir, ig, depth + 1, lastItemStack);
-    } else if (stats.isFile() && entry.match(filePattern)) {
+    } else if (stats.isFile() && filePattern.test(entry)) {
       // Append file to layout
       layout += prefix + entry + "\n";
 
@@ -292,7 +293,14 @@ async function finalizeOutput() {
     layoutIncluded = true; // Set the flag as true after including layout
   }
   finalOutput += singleFileOutput.join("\n");
+
+  // Write final output regardless of chunk size
   await writeOutput(finalOutput);
+  if (currentChunkSize > 0) {
+    await writeChunkOutput(singleFileOutput.join(""));
+    singleFileOutput = [];
+    currentChunkSize = 0;
+  }
 }
 
 /**
@@ -303,24 +311,22 @@ async function finalizeOutput() {
  */
 async function writeOutput(output) {
   try {
+    // If chunk size is specified and exceeded, write current buffer and reset
     if (
       argv["chunk-size"] &&
       currentChunkSize + output.length > argv["chunk-size"] * 1024
     ) {
-      // Output exceeds chunk size, write current buffer and reset
       await writeChunkOutput(singleFileOutput.join(""));
       singleFileOutput = []; // Clear the buffer after writing
       currentChunkSize = 0;
-      // Append remaining output to a new single file output
       singleFileOutput.push(output);
       currentChunkSize += output.length;
     } else {
-      // Chunk size is not exceeded, just add to current buffer
+      // No chunk size specified or not exceeded, just add to current buffer
       singleFileOutput.push(output);
       currentChunkSize += output.length;
     }
   } catch (error) {
-    // Handle any errors that may occur during output processing
     console.error("Error processing output: ", error);
   }
 }
