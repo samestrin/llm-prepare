@@ -3,15 +3,15 @@ name: Update README Version Badge
 on:
   push:
     branches:
-      - main  # Ensure this is your default branch
+      - main # Ensure this is your default branch
     paths:
-      - 'package.json'
+      - "package.json"
 
 jobs:
   update-readme:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Update README
         run: |
           VERSION=$(jq -r '.version' package.json)
