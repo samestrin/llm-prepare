@@ -39,12 +39,6 @@ Navigate to your project's root directory and run:
 npm install fs-extra ignore yargs yargs/helpers
 ```
 
-or:
-
-```bash
-npm install
-```
-
 ### Making the Script Globally Available
 
 To use the script from any location on your system, you need to install it globally. You can do this using npm.
