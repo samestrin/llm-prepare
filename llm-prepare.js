@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 const fs = require("fs-extra");
 const path = require("path");
 const ignore = require("ignore");
@@ -53,29 +54,44 @@ const argv = yargs(hideBin(process.argv))
   .version("v", "Display the version number", packageJson.version) // Adding version command
   .alias("v", "version").argv;
 
-// Helper function to escape special characters in regex and convert wildcard * to .*
-const escapeRegExp = (string) => string.replace(/[.+?^${}()|[\]\\]/g, "\\$&");
-const convertWildcard = (pattern) => pattern.replace(/\*/g, ".*");
-
 const filePattern = new RegExp(
   argv["file-pattern"] === "*"
     ? ".*"
     : convertWildcard(escapeRegExp(argv["file-pattern"]))
 );
-const compress = argv.compress;
+
+let compress = argv.compress;
 let singleFileOutput = ""; // Declare singleFileOutput at the top level
 let layout = "";
 let currentChunkSize = 0;
 
-// Improved: Ignore empty lines and comments in ignore files
-const filterIgnoreContent = (content) => {
+let outputFileCounter = 1; // Initialize file counter for output chunks
+main().catch((error) => console.error(`Unhandled error: ${error.message}`));
+
+/**
+ * Filters out empty lines and comments from .ignore file content
+ *
+ * @param {string} content - The content of an ignore file
+ * @returns {string} Filtered content with no empty lines or comment lines
+ */
+
+function filterIgnoreContent(content) {
   return content
     .split("\n")
-    .filter((line) => line.trim() !== "" && !line.trim().startsWith("#"))
+    .filter(function (line) {
+      return line.trim() !== "" && !line.trim().startsWith("#");
+    })
     .join("\n");
-};
+}
 
-// Updated readIgnoreFiles function to handle .gitignore better
+/**
+ * Reads and processes .ignore files in a directory to prepare an ignore manager
+ *
+ * @param {string} dir - The directory path to read ignore files from
+ * @returns {object} The ignore manager with configured rules
+ * @throws {Error} Description of the error thrown when reading fails
+ */
+
 async function readIgnoreFiles(dir) {
   const ig = ignore();
   ig.add(".git");
@@ -102,7 +118,15 @@ async function readIgnoreFiles(dir) {
   return ig;
 }
 
-// Updated processDirectory to handle layout suppression and file chunking
+/**
+ * Processes a directory recursively, applying ignore rules and preparing content for output
+ *
+ * @param {string} dir - The current directory to process
+ * @param {string} [baseDir=dir] - The base directory of the processing to maintain relative paths
+ * @param {object} ig - The ignore manager with rules to apply
+ * @throws {Error} Description of the error thrown when processing fails
+ */
+
 async function processDirectory(dir, baseDir = dir, ig) {
   try {
     const entries = await fs.readdir(dir);
@@ -177,7 +201,13 @@ async function processDirectory(dir, baseDir = dir, ig) {
   }
 }
 
-// Helper to write output to file or console
+/**
+ * Writes processed output to a file or console based on user configuration
+ *
+ * @param {string} output - The content to write out
+ * @throws {Error} Description of the error thrown when writing fails
+ */
+
 async function writeOutput(output) {
   if (argv.outputFilename) {
     let filename = argv.outputFilename;
@@ -194,7 +224,13 @@ async function writeOutput(output) {
   }
 }
 
-// Main execution function with initial layout setup
+/**
+ * Main execution function, sets up the initial layout and processes the directory
+ * based on provided command line arguments
+ *
+ * @throws {Error} Description of the error thrown when execution fails
+ */
+
 async function main() {
   try {
     const ig = await readIgnoreFiles(argv["path-name"]);
@@ -213,5 +249,24 @@ async function main() {
   }
 }
 
-let outputFileCounter = 1; // Initialize file counter for output chunks
-main().catch((error) => console.error(`Unhandled error: ${error.message}`));
+/**
+ * Escapes special characters in a string to safely use it as a regular expression
+ *
+ * @param {string} string - The string to escape
+ * @returns {string} The escaped string
+ */
+
+function escapeRegExp(string) {
+  return string.replace(/[.+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Converts wildcard characters in a string to a regex-compatible format
+ *
+ * @param {string} pattern - The string pattern containing wildcards
+ * @returns {string} The string with wildcards converted to regular expression wildcards
+ */
+
+function convertWildcard(pattern) {
+  return pattern.replace(/\*/g, ".*");
+}
