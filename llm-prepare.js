@@ -58,6 +58,7 @@ async function readIgnoreFiles(dir) {
   ig.add(".git"); // Ignore .git folder
   ig.add(".gitignore"); // Ignore .gitignore file
   ig.add("vendor"); // Ignore vendor directory
+  ig.add("node_modules"); // Ignore vendor directory
   ig.add("*.lock"); // Ignore composer.lock files
   ig.add("npm-shrinkwrap.json"); // Ignore npm-shrinkwrap.json file
   ig.add("package-lock.json"); // Ignore package-lock.json" file
