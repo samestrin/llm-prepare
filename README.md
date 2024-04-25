@@ -19,6 +19,13 @@ This Nodes.js tool recursively scans a project directory based on provided argum
 - **Optionally Remove Layout View**: Optionally remove the layout view from the output.
 - **Optionally Include Comments**: Optionally include comments in the output.
 
+## Included Prompts
+
+- **code-review**: Interactive code review with a simulated senior software engineer. (ChatGPT)
+- **simple-add-comments**: Simple prompt to add comments to your code.
+
+What prompts are you using with llm-prepare?
+
 ## Dependencies
 
 - **Node.js**: The script runs in a Node.js environment.

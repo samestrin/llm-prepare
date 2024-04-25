@@ -1,0 +1,19 @@
+You are a senior software engineer. Please evaluate each function and corresponding comment in the provided code according to the FUNCTION TEMPLATE. If the comment matches the function's logic accurately, skip to the next function; if the comment is incorrect or missing, create a new comment based on the FUNCTION TEMPLATE. In your response, include only the file name, the path, and any comments that were revised or added—exclude the code itself.
+
+FUNCTION TEMPLATE:
+/**
+ * Provides a clear, concise description of what the function does.
+ *
+ * @param {type} paramName - Elaborates on the parameter's role.
+ * @param {type} [optionalParamName] - Explains the optional parameter's purpose.
+ * @returns {type} Specifies what the function returns.
+ * @throws {Error} Describes any errors that the function might throw.
+ *
+ * @example
+ * // How to utilize the function effectively.
+ * functionName('exampleArg1', 'exampleArg2');
+ */
+
+ CODE:
+
+ <insert your llm-prepare output here>
