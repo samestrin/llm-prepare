@@ -10,7 +10,7 @@ const path = require("path");
 const ignore = require("ignore");
 const yargs = require("yargs/yargs");
 const { hideBin } = require("yargs/helpers");
-const packageJson = require("./package.json"); // Assuming package.json is in the same directory as your script
+const packageJson = require("./package.json");
 
 // Set up command line arguments
 const argv = yargs(hideBin(process.argv))
@@ -59,19 +59,50 @@ const argv = yargs(hideBin(process.argv))
   .version("v", "Display the version number", packageJson.version) // Adding version command
   .alias("v", "version").argv;
 
+// handle filePattern RegExp
 const filePattern = new RegExp(
   argv["file-pattern"] === "*"
     ? ".*"
     : convertWildcard(escapeRegExp(argv["file-pattern"]))
 );
 
-let compress = argv.compress;
-let singleFileOutput = ""; // Declare singleFileOutput at the top level
+// Initialize variables
+let singleFileOutput = "";
 let layout = "";
 let currentChunkSize = 0;
+let outputFileCounter = 1;
 
-let outputFileCounter = 1; // Initialize file counter for output chunks
+// Main execution function
 main().catch((error) => console.error(`Unhandled error: ${error.message}`));
+
+/**
+ * Functions
+ */
+
+/**
+ * Main execution function, sets up the initial layout and processes the directory
+ * based on provided command line arguments
+ *
+ * @throws {Error} Description of the error thrown when execution fails
+ */
+
+async function main() {
+  try {
+    const ig = await readIgnoreFiles(argv["path-name"]);
+    if (!argv["suppress-layout"]) {
+      layout += "/" + path.basename(argv["path-name"]) + "\n";
+    }
+    await processDirectory(argv["path-name"], argv["path-name"], ig);
+    singleFileOutput = argv["suppress-layout"]
+      ? singleFileOutput
+      : layout + "\n" + singleFileOutput;
+
+    // Final output write
+    await writeOutput(singleFileOutput);
+  } catch (error) {
+    console.error(`Main execution error: ${error.message}`);
+  }
+}
 
 /**
  * Filters out empty lines and comments from .ignore file content
@@ -169,7 +200,7 @@ async function processDirectory(dir, baseDir = dir, ig) {
 
         content = content.replace(/[ \t]+/g, " "); // Normalize spaces and tabs
 
-        if (compress) {
+        if (argv["compress"]) {
           content = content.replace(/\s+/g, " ").trim(); // Compress whitespace
         } else {
           content = content.replace(/(?:\r\n|\r|\n){2,}/g, "\n"); // Condense newlines
@@ -226,31 +257,6 @@ async function writeOutput(output) {
     outputFileCounter++;
   } else {
     console.log(output);
-  }
-}
-
-/**
- * Main execution function, sets up the initial layout and processes the directory
- * based on provided command line arguments
- *
- * @throws {Error} Description of the error thrown when execution fails
- */
-
-async function main() {
-  try {
-    const ig = await readIgnoreFiles(argv["path-name"]);
-    if (!argv["suppress-layout"]) {
-      layout += "/" + path.basename(argv["path-name"]) + "\n";
-    }
-    await processDirectory(argv["path-name"], argv["path-name"], ig);
-    singleFileOutput = argv["suppress-layout"]
-      ? singleFileOutput
-      : layout + "\n" + singleFileOutput;
-
-    // Final output write
-    await writeOutput(singleFileOutput);
-  } catch (error) {
-    console.error(`Main execution error: ${error.message}`);
   }
 }
 
