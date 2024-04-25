@@ -87,7 +87,7 @@ main().catch(handleError);
  * @param {Error} error - The error object caught
  */
 function handleError(error) {
-  if (false) {
+  if (true) {
     console.error(`Unhandled error: ${error.message}`);
   } else {
     console.log(`${error.message}`);
@@ -259,7 +259,7 @@ async function processDirectory(
       } else {
         content = content.replace(/(?:\r\n|\r|\n){2,}/g, "\n"); // Condense newlines
       }
-      console.log(`${path.relative(baseDir, entryPath)}`);
+
       let fileContent =
         `
 
