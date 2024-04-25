@@ -3,10 +3,11 @@
 /**
  * llm-prepare converts complex project directory structures and files into a single
  * flat or set of flat files for LLM processing using AI tools like ChatGPT, Claude, Gemini,
- * Mistral, or ..?
+ * Mistral, or others.
  *
- * Copyright (c) 2024-PRESENT Sam Estrin <https://github.com/samestrin/llm-prepare>
+ * Copyright (c) 2024-PRESENT Sam Estrin
  * This script is licensed under the MIT License (see LICENSE for details)
+ * GitHub: https://github.com/samestrin/llm-prepare
  */
 
 const fs = require("fs-extra");
@@ -70,7 +71,7 @@ let layoutIncluded = false;
 let currentChunkSize = 0;
 let outputFileCounter = 1;
 
-// handle filePattern RegExp
+// Handle filePattern RegExp
 const filePattern = new RegExp(
   argv["file-pattern"] === "*"
     ? ".*"
@@ -86,12 +87,18 @@ main().catch(handleError);
  * @param {Error} error - The error object caught
  */
 function handleError(error) {
-  console.error(`Unhandled error: ${error.message}`);
+  if (false) {
+    console.error(`Unhandled error: ${error.message}`);
+  } else {
+    console.log(`${error.message}`);
+    console.log(`  at ${error.stack}`);
+  }
 }
 
 /**
- * Main execution function, sets up the initial layout and processes the directory
- * based on provided command line arguments
+ * The core execution function of the script. Sets up the directory layout,
+ * reads and processes ignore files, and initiates the processing of the
+ * provided directory.
  */
 async function main() {
   const ig = await readIgnoreFiles(argv["path-name"]);
@@ -100,14 +107,16 @@ async function main() {
     layout = "/" + path.basename(argv["path-name"]) + "\n"; // Setting the initial layout
   }
   await processDirectory(argv["path-name"], argv["path-name"], ig);
-  await finalizeOutput(); // Final output handling moved to a separate function
+  await writeAllOutputs(); // handle final output differently
 }
 
 /**
- * Reads and processes .ignore files in a directory to prepare an ignore manager
+ * Reads and processes .ignore files (like .gitignore) within the specified directory,
+ * configuring an ignore manager for filtering files and directories.
  *
- * @param {string} dir - The directory path to read ignore files from
- * @returns {object} The ignore manager with configured rules
+ * @param {string} dir - The directory to search for .ignore files.
+ * @returns {object} An ignore manager object with configured ignore rules.
+ * @throws {Error} If there are issues reading or processing .ignore files.
  */
 async function readIgnoreFiles(dir) {
   const ig = ignore();
@@ -179,14 +188,14 @@ async function fileExists(filePath) {
 }
 
 /**
- * Processes a directory recursively, applying ignore rules and preparing content for output
- * while generating an ASCII layout of the directory structure.
+ * Recursively processes a directory, applying ignore rules, building a layout,
+ * and preparing file content for output.
  *
  * @param {string} dir - The current directory to process
- * @param {string} [baseDir=dir] - The base directory of the processing to maintain relative paths
- * @param {object} ig - The ignore manager with rules to apply
+ * @param {string} [baseDir=dir] - The base directory for relative paths
+ * @param {object} ig - The ignore manager for applying file/directory exclusions
  * @param {number} [depth=0] - The current depth in the directory tree
- * @param {Array} lastItemStack - Tracks if the current item is the last in each directory level
+ * @param {Array} lastItemStack - Tracks if the current item is the last at each depth
  */
 async function processDirectory(
   dir,
@@ -230,7 +239,6 @@ async function processDirectory(
       // Append directory to layout
       layout += prefix + entry + "/\n";
       // Recursive call to process subdirectory
-
       await processDirectory(entryPath, baseDir, ig, depth + 1, lastItemStack);
     } else if (stats.isFile() && filePattern.test(entry)) {
       // Append file to layout
@@ -251,7 +259,7 @@ async function processDirectory(
       } else {
         content = content.replace(/(?:\r\n|\r|\n){2,}/g, "\n"); // Condense newlines
       }
-
+      console.log(`${path.relative(baseDir, entryPath)}`);
       let fileContent =
         `
 
@@ -264,100 +272,84 @@ async function processDirectory(
         content +
         "\n";
 
-      // Handle output logic based on chunk size, if specified
-      if (
-        argv["chunk-size"] &&
-        currentChunkSize + fileContent.length > argv["chunk-size"] * 1024
-      ) {
-        await writeOutput(singleFileOutput.join(""));
-        singleFileOutput = [];
-        currentChunkSize = 0;
-      }
-
       singleFileOutput.push(fileContent);
-      currentChunkSize += fileContent.length;
     }
   }
 }
 
 /**
- * Manages layout display in output and finalizes writing to the output destination.
+ * Handles output writing, including chunking data (if configured) and managing
+ * the inclusion of the directory layout.
  */
-async function finalizeOutput() {
-  if (singleFileOutput.length > 0) {
-    // Ensure there's content to write
-    let finalOutput = singleFileOutput.join("\n");
-    await writeOutput(finalOutput);
-    singleFileOutput = []; // Clear buffer after writing
-    currentChunkSize = 0;
+async function writeAllOutputs() {
+  // Check if chunking is necessary
+
+  if (argv["chunk-size"]) {
+    let currentOutput = "";
+    let accumulatedSize = 0;
+    const chunks = [];
+
+    await addLayout();
+
+    // Break the output into chunks
+    for (const content of singleFileOutput) {
+      if (accumulatedSize + content.length > argv["chunk-size"] * 1024) {
+        chunks.push(currentOutput);
+        currentOutput = "";
+        accumulatedSize = 0;
+      }
+      currentOutput += content;
+      accumulatedSize += content.length;
+    }
+    if (currentOutput) {
+      chunks.push(currentOutput);
+    }
+
+    // Write chunks in reverse if layout needs to be in the first
+    for (let i = chunks.length - 1; i >= 0; i--) {
+      await writeChunkOutput(chunks[i].trim(), i + 1);
+    }
+  } else {
+    // No chunking, just write everything
+    await writeChunkOutput(layout + singleFileOutput.join("\n"), 1);
   }
 }
 
+/**
+ * Writes a chunk of processed output to a file, or logs it to the console
+ * if no filename is provided.  Handles errors during the file writing process.
+ *
+ * @param {string} output - The content to be written.
+ * @param {number} index -  The index of the chunk (for file naming).
+ */
+async function writeChunkOutput(output, index) {
+  let filename = argv["output-filename"];
+  if (!filename) {
+    console.log("Error: No filename provided."); // If no filename provided, output to console
+  } else {
+    const extension = path.extname(filename);
+    const baseName = path.basename(filename, extension);
+    const indexedFilename =
+      index === 1
+        ? `${baseName}${extension}`
+        : `${baseName}.${index}${extension}`;
+
+    await fs.writeFile(indexedFilename, output, "utf8");
+    console.log(`Output written to ${indexedFilename}`);
+  }
+}
+
+/**
+ * Prepends the directory layout to the output buffer if it's not already included
+ * and if the layout is not suppressed by the user. Ensures the layout is only
+ * added once.
+ */
 async function addLayout() {
-  console.log(`Final layout before writing: \n${layout}`);
-  // handle the layout display for single files
+  // Handle the layout display for single files
   if (!layoutIncluded && !argv["suppress-layout"]) {
     singleFileOutput.unshift(layout); // Prepend layout if not already included
     currentChunkSize += layout.length;
     layoutIncluded = true; // Set flag to avoid duplicating the layout
-  }
-}
-/**
- * Writes processed output to a file or console based on user configuration.
- * Includes error handling to catch and report any issues during the file write process.
- *
- * @param {string} output - The content to write out.
- */
-async function writeOutput(output) {
-  if (argv["chunk-size"] && outputFileCounter === 1) {
-    await addLayout();
-  }
-  if (
-    argv["chunk-size"] &&
-    currentChunkSize + output.length > argv["chunk-size"] * 1024
-  ) {
-    // If chunk size is specified and current chunk + new output exceeds it, write current chunk
-    await writeChunkOutput(singleFileOutput.join("").trim());
-    singleFileOutput = [output]; // Start new chunk with current output
-    currentChunkSize = output.length; // Reset chunk size counter
-  } else {
-    // If no chunk size is specified, add output to buffer
-
-    await addLayout();
-
-    singleFileOutput.push(output);
-    currentChunkSize += output.length; // Update current chunk size
-
-    if (!argv["chunk-size"]) {
-      // If no chunking, write all at once at the end
-      await writeChunkOutput(singleFileOutput.join("").trim());
-      singleFileOutput = []; // Clear buffer after writing
-      currentChunkSize = 0;
-    }
-  }
-}
-
-/**
- * Writes chunked processed output to a file or console based on user configuration.
- * Includes error handling to catch and report any issues during the file write process.
- *
- * @param {string} output - The content to write out.
- */
-async function writeChunkOutput(output) {
-  if (argv["output-filename"]) {
-    // Construct filename for output
-    let filename = argv["output-filename"];
-    if (outputFileCounter > 1) {
-      const extension = path.extname(filename);
-      const baseName = filename.slice(0, -extension.length);
-      filename = `${baseName}.${outputFileCounter}${extension}`;
-    }
-    await fs.writeFile(filename, output, "utf8");
-    console.log(`Output written to ${filename}`);
-    outputFileCounter++; // Increment for next chunk
-  } else {
-    // If no filename provided, output to console
-    console.log(output);
   }
 }
 
