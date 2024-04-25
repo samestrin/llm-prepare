@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 
 /**
+ * llm-prepare converts complex project directory structures and files into a single
+ * flat or set of flat files for LLM processing using AI tools like ChatGPT, Claude, Gemini,
+ * Mistral, or ..?
+ *
  * Copyright (c) 2024-PRESENT Sam Estrin <https://github.com/samestrin/llm-prepare>
  * This script is licensed under the MIT License (see LICENSE for details)
  */
@@ -130,6 +134,7 @@ function filterIgnoreContent(content) {
 
 async function readIgnoreFiles(dir) {
   const ig = ignore();
+
   ig.add(".git");
   ig.add(".gitignore");
   ig.add("vendor");
