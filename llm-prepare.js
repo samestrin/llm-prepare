@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 
+/**
+ * Copyright (c) 2024-PRESENT Sam Estrin <https://github.com/samestrin/llm-prepare>
+ * This script is licensed under the MIT License (see LICENSE for details)
+ */
+
 const fs = require("fs-extra");
 const path = require("path");
 const ignore = require("ignore");
