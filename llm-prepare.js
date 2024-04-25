@@ -293,6 +293,15 @@ async function finalizeOutput() {
   }
 }
 
+async function addLayout() {
+  console.log(`Final layout before writing: \n${layout}`);
+  // handle the layout display for single files
+  if (!layoutIncluded && !argv["suppress-layout"]) {
+    singleFileOutput.unshift(layout); // Prepend layout if not already included
+    currentChunkSize += layout.length;
+    layoutIncluded = true; // Set flag to avoid duplicating the layout
+  }
+}
 /**
  * Writes processed output to a file or console based on user configuration.
  * Includes error handling to catch and report any issues during the file write process.
@@ -300,28 +309,28 @@ async function finalizeOutput() {
  * @param {string} output - The content to write out.
  */
 async function writeOutput(output) {
-  if (!layoutIncluded && !argv["suppress-layout"]) {
-    output = layout + "\n" + output; // Prepend layout if not already included
-    layoutIncluded = true; // Set flag to avoid duplicating the layout
+  if (argv["chunk-size"] && outputFileCounter === 1) {
+    await addLayout();
   }
-
   if (
     argv["chunk-size"] &&
     currentChunkSize + output.length > argv["chunk-size"] * 1024
   ) {
     // If chunk size is specified and current chunk + new output exceeds it, write current chunk
-    await writeChunkOutput(singleFileOutput.join(""));
+    await writeChunkOutput(singleFileOutput.join("").trim());
     singleFileOutput = [output]; // Start new chunk with current output
     currentChunkSize = output.length; // Reset chunk size counter
   } else {
     // If no chunk size is specified, add output to buffer
+
+    await addLayout();
 
     singleFileOutput.push(output);
     currentChunkSize += output.length; // Update current chunk size
 
     if (!argv["chunk-size"]) {
       // If no chunking, write all at once at the end
-      await writeChunkOutput(singleFileOutput.join(""));
+      await writeChunkOutput(singleFileOutput.join("").trim());
       singleFileOutput = []; // Clear buffer after writing
       currentChunkSize = 0;
     }
