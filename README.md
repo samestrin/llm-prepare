@@ -2,7 +2,7 @@
 
 **llm-prepare** converts complex project directory structures and file contents into a single flat or set of flat files for LLM processing by tools like ChatGPT, Claude, Gemini, or Mistral.
 
-This Nodes.js tool recursively scans a project directory based on provided arguments (at least a directory and file inclusion pattern). Then, it constructs a simplified layout view that includes all directories and file matches. The tool then combines the layout view with the aggregated file content of the entire project. The aggregated file content is stripped of comments and unnecessary whitespace by default. Output compression is also supported to reduce token use. It can even handle large projects by chunking the output.
+This Nodes.js tool recursively scans a project directory based on provided arguments (at least a directory and file inclusion pattern). Then, it constructs a simplified layout view that includes all directories and file matches. The tool then combines the layout view with the aggregated file content of the entire project. The aggregated file content is stripped of comments and unnecessary whitespace by default. Output compression is also supported to reduce token use. It can handle large projects by chunking the output.
 
 ## Features
 
