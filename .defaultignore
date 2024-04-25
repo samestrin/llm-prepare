@@ -1,8 +1,0 @@
-# Default llm-prepare ignore rules
-
-.git
-.gitignore
-vendor
-node_modules
-_.lock
-_.json
