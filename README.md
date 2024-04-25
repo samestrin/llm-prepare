@@ -10,7 +10,7 @@ This Nodes.js tool recursively scans a project directory based on provided argum
 
 ## Features
 
-- **Layout View**: Provides a layout view of your project.
+- **Layout View**: Provides an ASCII layout view of your project.
 - **Directory Traversal**: Recursively scan through the project directory.
 - **Custom File Filtering**: Include files based on specified patterns.
 - **Ignore Support**: Automatically respects `.ignore` files to exclude specific files or directories.
