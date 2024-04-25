@@ -1,14 +1,14 @@
 {
   "name": "llm-prepare",
-  "version": "1.0.4",
-  "description": "A CLI node application that converts multi-directory/multi-projects into a single file for LLM processing.",
+  "version": "1.0.7 alpha",
+  "description": "llm-prepare converts complex project directory structures and file contents into a single flat or set of flat files for LLM processing by tools like ChatGPT, Claude, Gemini, or Mistral.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "fs-extra": "^11.2.0",
     "ignore": "^5.3.1",
