@@ -1,6 +1,6 @@
 # llm-prepare
 
-This Node.js script converts complex project directory structures and file contents into a flat file or set of flat files. It recursively scans a project directory based on provided arguments (at least a directory and file inclusion pattern), and constructs a simplified view of the directory layout. This is combined with the aggregated content after stripping comments (by default) and unnecessary whitespace. The output can optionally be compressed to save further tokens.
+**llm-prepare** converts complex project directory structures and file contents into a flat file or set of flat files. It recursively scans a project directory based on provided arguments (at least a directory and file inclusion pattern), and constructs a simplified view of the directory layout. This is combined with the aggregated content after stripping comments (by default) and unnecessary whitespace. The output can optionally be compressed to save further tokens.
 
 ## Features
 
