@@ -6,6 +6,7 @@ on:
       - main # Ensure this is your default branch
     paths:
       - "package.json"
+  workflow_dispatch:
 
 jobs:
   update-readme:
