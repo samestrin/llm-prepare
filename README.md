@@ -4,9 +4,9 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Built with Node.js](https://img.shields.io/badge/Built%20with-Node.js-green)](https://nodejs.org/)
 
-**llm-prepare** converts complex project directory structures and files into a single flat or set of flat files for LLM processing using AI tools like [ChatGPT](https://chat.openai.com/), [Claude](https://claude.ai/chat), [Gemini](https://gemini.google.com/), [Mistral](https://chat.mistral.ai/), or ..?
+**llm-prepare** converts complex project directory structures and files into a single flat or set of flat files for LLM processing using AI tools like ChatGPT, Claude, Gemini, Mistral, or ..?
 
-This [Nodes.js](https://nodejs.org/) tool recursively scans a project directory based on provided arguments (at least a directory and file inclusion pattern). Then, it constructs a simplified layout view that includes all directories and file matches. The tool then combines the layout view with the aggregated file content of the entire project. The aggregated file content is stripped of comments and unnecessary whitespace by default. Output compression is also supported to reduce token use, and llm-prepare can handle large projects by chunking the output.
+This Nodes.js tool recursively scans a project directory based on provided arguments (at least a directory and file inclusion pattern). Then, it constructs a simplified layout view that includes all directories and file matches. The tool then combines the layout view with the aggregated file content of the entire project. The aggregated file content is stripped of comments and unnecessary whitespace by default. Output compression is also supported to reduce token use, and llm-prepare can handle large projects by chunking the output.
 
 ## Features
 
@@ -100,4 +100,4 @@ Contributions to this project are welcome. Please fork the repository and submit
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](/LICENSE) file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
