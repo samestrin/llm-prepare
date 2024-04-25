@@ -21,12 +21,19 @@ const argv = yargs(hideBin(process.argv))
     type: "string",
     demandOption: true,
   })
+  .option("include-comments", {
+    describe: "Include comments? (Default: false)",
+    type: "boolean",
+    demandOption: false,
+    alias: "i",
+  })
   .option("compress", {
     alias: "c",
-    describe: "Should we compress the output?",
+    describe: "Compress? (Default: false)",
     type: "boolean",
     demandOption: false,
   })
+
   .option("output-filename", {
     alias: "o",
     describe: "Filename to write output to instead of printing to console",
@@ -123,7 +130,10 @@ async function processDirectory(dir, baseDir = dir, ig) {
           entry +
           "\n";
 
-        content = content.replace(/\/\/.*|\/\*[\s\S]*?\*\//g, ""); // Remove comments
+        if (!argv.includeComments) {
+          content = content.replace(/\/\/.*|\/\*[\s\S]*?\*\//g, ""); // Remove comments
+        }
+
         content = content.replace(/[ \t]+/g, " "); // Normalize spaces and tabs to single space
 
         if (compress) {
