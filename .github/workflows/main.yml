@@ -13,10 +13,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Check jq and Version Extraction
+        run: |
+          jq --version
+          VERSION=$(jq -r '.version' package.json)
+          echo "Extracted Version: $VERSION"
       - name: Update README
         run: |
           VERSION=$(jq -r '.version' package.json)
-          sed -i "s/badge\/version-.*-blue/badge\/version-$VERSION-blue/" README.md
+          sed -i "s/Version [0-9]*\.[0-9]*\.[0-9]*/Version $VERSION/g" README.md
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add README.md
