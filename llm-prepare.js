@@ -281,24 +281,14 @@ async function processDirectory(
 }
 
 /**
- * Manages layout display in output
- *
- * @param {string} output - The content to write out
+ * Manages layout display in output and finalizes writing to the output destination.
  */
 async function finalizeOutput() {
-  let finalOutput = "";
-  // Check if layout has not been included and it is not supposed to be suppressed
-  if (!layoutIncluded && !argv["suppress-layout"]) {
-    finalOutput += layout + "\n";
-    layoutIncluded = true; // Set the flag as true after including layout
-  }
-  finalOutput += singleFileOutput.join("\n");
-
-  // Write final output regardless of chunk size
-  await writeOutput(finalOutput);
-  if (currentChunkSize > 0) {
-    await writeChunkOutput(singleFileOutput.join(""));
-    singleFileOutput = [];
+  if (singleFileOutput.length > 0) {
+    // Ensure there's content to write
+    let finalOutput = singleFileOutput.join("\n");
+    await writeOutput(finalOutput);
+    singleFileOutput = []; // Clear buffer after writing
     currentChunkSize = 0;
   }
 }
@@ -310,24 +300,31 @@ async function finalizeOutput() {
  * @param {string} output - The content to write out.
  */
 async function writeOutput(output) {
-  try {
-    // If chunk size is specified and exceeded, write current buffer and reset
-    if (
-      argv["chunk-size"] &&
-      currentChunkSize + output.length > argv["chunk-size"] * 1024
-    ) {
+  if (!layoutIncluded && !argv["suppress-layout"]) {
+    output = layout + "\n" + output; // Prepend layout if not already included
+    layoutIncluded = true; // Set flag to avoid duplicating the layout
+  }
+
+  if (
+    argv["chunk-size"] &&
+    currentChunkSize + output.length > argv["chunk-size"] * 1024
+  ) {
+    // If chunk size is specified and current chunk + new output exceeds it, write current chunk
+    await writeChunkOutput(singleFileOutput.join(""));
+    singleFileOutput = [output]; // Start new chunk with current output
+    currentChunkSize = output.length; // Reset chunk size counter
+  } else {
+    // If no chunk size is specified, add output to buffer
+
+    singleFileOutput.push(output);
+    currentChunkSize += output.length; // Update current chunk size
+
+    if (!argv["chunk-size"]) {
+      // If no chunking, write all at once at the end
       await writeChunkOutput(singleFileOutput.join(""));
-      singleFileOutput = []; // Clear the buffer after writing
+      singleFileOutput = []; // Clear buffer after writing
       currentChunkSize = 0;
-      singleFileOutput.push(output);
-      currentChunkSize += output.length;
-    } else {
-      // No chunk size specified or not exceeded, just add to current buffer
-      singleFileOutput.push(output);
-      currentChunkSize += output.length;
     }
-  } catch (error) {
-    console.error("Error processing output: ", error);
   }
 }
 
@@ -338,30 +335,20 @@ async function writeOutput(output) {
  * @param {string} output - The content to write out.
  */
 async function writeChunkOutput(output) {
-  output = output.trim();
-
-  try {
-    // Determine the filename or use console output
-    if (argv["output-filename"]) {
-      // Construct the filename with potential chunk numbering
-      let filename = argv["output-filename"];
-      if (outputFileCounter > 1) {
-        // Append a chunk number to the filename if multiple chunks are needed
-        const extension = path.extname(filename);
-        const baseName = filename.slice(0, -extension.length);
-        filename = `${baseName}.${outputFileCounter}${extension}`;
-      }
-      await fs.writeFile(filename, output, "utf8");
-      console.log(`Output written to ${filename}`);
-      outputFileCounter++; // Increment the file counter for the next potential chunk
-    } else {
-      // If no filename provided, output to console
-      console.log(output);
+  if (argv["output-filename"]) {
+    // Construct filename for output
+    let filename = argv["output-filename"];
+    if (outputFileCounter > 1) {
+      const extension = path.extname(filename);
+      const baseName = filename.slice(0, -extension.length);
+      filename = `${baseName}.${outputFileCounter}${extension}`;
     }
-  } catch (error) {
-    // Log the error and rethrow to ensure it's caught by calling functions
-    console.error("Error writing output to file: ", error);
-    throw new Error(`Failed to write output to file due to: ${error.message}`);
+    await fs.writeFile(filename, output, "utf8");
+    console.log(`Output written to ${filename}`);
+    outputFileCounter++; // Increment for next chunk
+  } else {
+    // If no filename provided, output to console
+    console.log(output);
   }
 }
 
