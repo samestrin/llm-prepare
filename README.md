@@ -1,15 +1,17 @@
 # llm-prepare
 
-**llm-prepare** converts complex project directory structures and file contents into a single flat or set of flat files. It recursively scans a project directory based on provided arguments (at least a directory and file inclusion pattern). Then, it constructs a simplified layout view that includes all directories and file matches. The tool then combines the layout view with the aggregated file content of the entire project. The aggregated file content is stripped of comments and unnecessary whitespace by default. Output compression is also supported to reduce token use.
+**llm-prepare** converts complex project directory structures and file contents into a single flat or set of flat files for LLM processing by tools like ChatGPT, Claude, Gemini, or Mistral.
+
+This tool recursively scans a project directory based on provided arguments (at least a directory and file inclusion pattern). Then, it constructs a simplified layout view that includes all directories and file matches. The tool then combines the layout view with the aggregated file content of the entire project. The aggregated file content is stripped of comments and unnecessary whitespace by default. Output compression is also supported to reduce token use.
 
 ## Features
 
 - **Layout View**: Provides a layout view of your project.
 - **Directory Traversal**: Recursively scan through the project directory.
 - **Custom File Filtering**: Include files based on specified patterns.
-- **Ignore Support**: Automatically respects `.ignore` files to exclude certain files or directories.
+- **Ignore Support**: Automatically respects `.ignore` files to exclude specific files or directories.
 - **Output Consolidation**: Generates a single flat file consolidated view of file contents and directory structure.
-- **Multifile Output**: Generates multiples flat files from a consolidated view of file contents and directory structure based on a provided chunk size.
+- **Multifile Output**: Generates multiple flat files from a consolidated view of file contents and directory structure based on a provided chunk size.
 - **Optionally Remove Layout View**: Optionally remove the layout view from the output.
 - **Optionally Include Comments**: Optionally include comments in the output.
 
