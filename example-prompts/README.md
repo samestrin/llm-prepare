@@ -13,7 +13,7 @@ Once you've used llm-prepare your flat or set of flat files, you can use the out
 
 ### Simple Prompts
 
-- **simple-add-comments**: A set of simple prompts to add comments to your code (C#, Javascipt, PHP, Python, Ruby, and TypeScript).
+- **[simple-add-comments](/example-prompts/simple-add-comments/)**: A set of simple prompts that generate comments based on your code.
   - **[csharp-xml-documentation](/example-prompts/simple-add-comments/csharp-xml-documentation.md)**: C# XML Document format
   - **[js-jsdoc-comments](/example-prompts/simple-add-comments/js-jsdoc-comments.md)**: JSDoc format
   - **[php-phpdoc-comments](/example-prompts/simple-add-comments/php-phpdoc-comments.md)**: PHPDoc format
