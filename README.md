@@ -27,7 +27,7 @@ This Nodes.js tool recursively scans a project directory based on provided argum
 - **technical-document-generation**: Interactive technical document generation with a simulated senior technical writer.
 - **test-generation**: Interactive test generation with a simulated senior software engineer and simulated QA.
 
-The [example prompts](/samestrin/llm-prepare/blob/main/example-prompts/README.md) have been tested with ChatGPT GPT-4.
+The [example prompts](/example-prompts/README.md) have been tested with ChatGPT GPT-4.
 
 ## Dependencies
 
