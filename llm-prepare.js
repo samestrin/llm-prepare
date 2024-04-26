@@ -20,7 +20,10 @@ const packageJson = require("./package.json");
 const yargsBuilder = yargs(hideBin(process.argv));
 
 // Add path-name and file-pattern options conditionally
-if (!process.argv.includes("--show-default-ignore")) {
+if (
+  !process.argv.includes("--show-default-ignore") &&
+  !process.argv.includes("--show-prompts")
+) {
   yargsBuilder
     .option("path-name", {
       alias: "p",
@@ -76,6 +79,11 @@ yargsBuilder
     type: "string",
     demandOption: false,
   })
+  .option("show-prompts", {
+    describe: "Show example prompts in your browser",
+    type: "boolean",
+    demandOption: false,
+  })
   .version("v", "Display the version number", packageJson.version)
   .alias("v", "version").argv;
 
@@ -119,8 +127,16 @@ function handleError(error) {
  * provided directory.
  */
 async function main() {
+  // check for non-recursive actions
+
   if (argv["show-default-ignore"]) {
     await showDefaultIgnore();
+    return;
+  } else if (argv["show-prompts"]) {
+    const open = (await import("open")).default;
+    await open(
+      "https://github.com/samestrin/llm-prepare/tree/main/example-prompts"
+    );
     return;
   }
 
