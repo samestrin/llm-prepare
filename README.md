@@ -19,7 +19,7 @@ This Nodes.js tool recursively scans a project directory based on provided argum
 - **Optionally Remove Layout View**: Optionally remove the layout view from the output.
 - **Optionally Include Comments**: Optionally include comments in the output.
 
-## Included Prompts
+## Example Prompts
 
 - **code-review**: Interactive code review with a simulated senior software engineer.
 - **readme-generation**: Interactive technical README.md generation with a simulated senior technical writer.
@@ -27,7 +27,7 @@ This Nodes.js tool recursively scans a project directory based on provided argum
 - **technical-document-generation**: Interactive technical document generation with a simulated senior technical writer.
 - **test-generation**: Interactive test generation with a simulated senior software engineer and simulated QA.
 
-The included prompts have been tested with ChatGPT GPT-4.
+The [example prompts](/example-prompts/) have been tested with ChatGPT GPT-4.
 
 ## Dependencies
 
