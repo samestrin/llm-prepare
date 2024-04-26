@@ -6,10 +6,10 @@ Once you've used llm-prepare your flat or set of flat files, you can use the out
 
 ### Interactive Prompts
 
-- **code-review**: Interactive code review with a simulated senior software engineer.
-- **readme-generation**: Interactive technical README.md generation with a simulated senior technical writer.
-- **technical-document-generation**: Interactive technical document generation with a simulated senior technical writer.
-- **test-generation**: Interactive test generation with a simulated senior software engineer and simulated QA.
+- **[code-review](code-review.md)**: Interactive code review with a simulated senior software engineer.
+- **[readme-generation](readme-generation.md)**: Interactive technical README.md generation with a simulated senior technical writer.
+- **[technical-document-generation](technical-document-generation.md)**: Interactive technical document generation with a simulated senior technical writer.
+- **[test-generation](test-generation.md)**: Interactive test generation with a simulated senior software engineer and simulated QA.
 
 ### Simple Prompts
 
