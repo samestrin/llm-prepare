@@ -32,6 +32,7 @@ The included prompts have been tested with ChatGPT GPT-4.
 - **Node.js**: The script runs in a Node.js environment.
 - **fs-extra**: An extension of the standard Node.js `fs` module, providing additional methods and promise support.
 - **ignore**: Used to handle `.ignore` files similar to `.gitignore`.
+- **open**: Opens URLs in your default browser.
 - **yargs**: Helps in building interactive command line tools, by parsing arguments and generating an elegant user interface.
 - **yargs/helpers**: Provides utility methods for `yargs`.
 
