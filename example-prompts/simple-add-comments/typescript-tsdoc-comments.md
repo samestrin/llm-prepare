@@ -15,7 +15,6 @@ COMMENT TEMPLATE:
  * // How to utilize the function effectively.
  * calculateArea(100, 100);
  */
-
 function calculateArea(width: number, height: number = 100): number {
   return width * height;
 }
