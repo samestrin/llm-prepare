@@ -31,9 +31,9 @@ jobs:
 
       - name: Update README Version Badge
         run: |
-          VERSION=$(sed -n 's/^.*"version": "\\(.*\\)".*$/\\1/p' package.json)
-          sed -i "s/\\(Version-\[0-9\]\*\\.\[0-9\]\*\\.\[0-9\]\*\\)/Version-$VERSION/g" README.md
-          sed -i "s/badge\\/Version-\[0-9\]\\+\\.\[0-9\]\\+\\.\[0-9\]\\+\[^-\]\*-/badge\\/Version-$VERSION-/g" README.md
+          VERSION=$(node -p "require('./package.json').version")
+          sed -i "s/Version-[0-9]*\.[0-9]*\.[0-9]*/Version-$VERSION/g" README.md
+          sed -i "s/badge\/Version-[0-9]*\.[0-9]*\.[0-9]*-/badge\/Version-$VERSION-/g" README.md
 
       - name: Commit changes
         run: |
