@@ -39,17 +39,23 @@ The included prompts have been tested with ChatGPT GPT-4.
 
 Before installing, ensure you have Node.js and npm (Node Package Manager) installed on your system. You can download and install Node.js from [Node.js official website](https://nodejs.org/).
 
-### Installing Dependencies
+### Installation
 
-Navigate to your project's root directory and run:
+To install and use llm-prepare, follow these steps:
+
+1. Clone the Repository: Begin by cloning the repository containing the llm-prepare to your local machine.
 
 ```bash
-npm install fs-extra ignore yargs yargs/helpers
+git clone https://github.com/samestrin/llm-prepare/
 ```
 
-### Making the Script Globally Available
+2. Navigate to your project's root directory and run:
 
-To use the script from any location on your system, you need to install it globally. You can do this using npm.
+```bash
+npm install
+```
+
+3. To make llm-prepare available from any location on your system, you need to install it globally. You can do this using npm.
 
 Run the following command in your project directory:
 
