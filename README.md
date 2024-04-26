@@ -43,19 +43,19 @@ Before installing, ensure you have Node.js and npm (Node Package Manager) instal
 
 To install and use llm-prepare, follow these steps:
 
-1. Clone the Repository: Begin by cloning the repository containing the llm-prepare to your local machine.
+Clone the Repository: Begin by cloning the repository containing the llm-prepare to your local machine.
 
 ```bash
 git clone https://github.com/samestrin/llm-prepare/
 ```
 
-2. Navigate to your project's root directory and run:
+Navigate to your project's root directory and run:
 
 ```bash
 npm install
 ```
 
-3. To make llm-prepare available from any location on your system, you need to install it globally. You can do this using npm.
+To make llm-prepare available from any location on your system, you need to install it globally. You can do this using npm.
 
 Run the following command in your project directory:
 
