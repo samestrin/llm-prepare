@@ -23,7 +23,7 @@ This Nodes.js tool recursively scans a project directory based on provided argum
 
 - **code-review**: Interactive code review with a simulated senior software engineer.
 - **readme-generation**: Interactive technical README.md generation with a simulated senior technical writer.
-- **simple-add-comments**: A set of simple prompts to add comments to your code (C#, Javascipt, PHP, Python, Ruby, and TypeScript).
+- **simple-add-comments**: A set of simple prompts that generate comments based on your code (C#, Javascipt, PHP, Python, Ruby, and TypeScript).
 - **technical-document-generation**: Interactive technical document generation with a simulated senior technical writer.
 - **test-generation**: Interactive test generation with a simulated senior software engineer and simulated QA.
 
