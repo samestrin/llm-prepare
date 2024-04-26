@@ -104,6 +104,7 @@ This will process all JavaScript files in the specified project directory, respe
   -s, --suppress-layout      Suppress layout in output (Default: false)[boolean]
       --default-ignore       Use a custom default ignore file           [string]
       --show-default-ignore  Show default ignore file                   [string]
+      --show-prompts         Show example prompts in your browser      [boolean]
   -v, --version              Display the version number                [boolean]
 ```
 
