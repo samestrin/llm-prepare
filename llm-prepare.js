@@ -135,7 +135,7 @@ async function main() {
   } else if (argv["show-prompts"]) {
     const open = (await import("open")).default;
     await open(
-      "https://github.com/samestrin/llm-prepare/tree/main/example-prompts"
+      "https://github.com/samestrin/llm-prepare/blob/main/example-prompts/README.md"
     );
     return;
   }
