@@ -90,16 +90,18 @@ This will process all JavaScript files in the specified project directory, respe
 ## Options
 
 ```
-      --help              Show help                                    [boolean]
-  -p, --path-name         Path to the project directory      [string] [required]
-  -f, --file-pattern      Pattern of files to include, e.g., '\.js$' or '*' for
-                          all files                          [string] [required]
-  -o, --output-filename   Output filename                               [string]
-  -i, --include-comments  Include comments? (Default: false)           [boolean]
-  -c, --compress          Compress? (Default: false)                   [boolean]
-      --chunk-size        Maximum size (in kilobytes) of each file      [number]
-  -s, --suppress-layout   Suppress layout in output (Default: false)   [boolean]
-  -v, --version           Display the version number                   [boolean]
+      --help                 Show help                                 [boolean]
+  -p, --path-name            Path to the project directory   [string] [required]
+  -f, --file-pattern         Pattern of files to include, e.g., '\.js$' or '*'
+                             for all files                   [string] [required]
+  -o, --output-filename      Output filename                            [string]
+  -i, --include-comments     Include comments? (Default: false)        [boolean]
+  -c, --compress             Compress? (Default: false)                [boolean]
+      --chunk-size           Maximum size (in kilobytes) of each file   [number]
+  -s, --suppress-layout      Suppress layout in output (Default: false)[boolean]
+      --default-ignore       Use a custom default ignore file           [string]
+      --show-default-ignore  Show default ignore file                   [string]
+  -v, --version              Display the version number                [boolean]
 ```
 
 ## Contributing

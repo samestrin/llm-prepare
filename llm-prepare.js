@@ -17,21 +17,26 @@ const yargs = require("yargs/yargs");
 const { hideBin } = require("yargs/helpers");
 const packageJson = require("./package.json");
 
-// Set up command line arguments
-const argv = yargs(hideBin(process.argv))
-  .option("path-name", {
-    alias: "p",
-    describe: "Path to the project directory",
-    type: "string",
-    demandOption: true,
-  })
-  .option("file-pattern", {
-    alias: "f",
-    describe:
-      "Pattern of files to include, e.g., '\\.js$' or '*' for all files",
-    type: "string",
-    demandOption: true,
-  })
+const yargsBuilder = yargs(hideBin(process.argv));
+
+// Add path-name and file-pattern options conditionally
+if (!process.argv.includes("--show-default-ignore")) {
+  yargsBuilder
+    .option("path-name", {
+      alias: "p",
+      describe: "Path to the project directory",
+      type: "string",
+      demandOption: true,
+    })
+    .option("file-pattern", {
+      alias: "f",
+      describe:
+        "Pattern of files to include, e.g., '\\.js$' or '*' for all files",
+      type: "string",
+      demandOption: true,
+    });
+}
+yargsBuilder
   .option("output-filename", {
     alias: "o",
     describe: "Output filename",
@@ -61,23 +66,36 @@ const argv = yargs(hideBin(process.argv))
     type: "boolean",
     demandOption: false,
   })
+  .option("default-ignore", {
+    describe: "Use a custom default ignore file",
+    type: "string",
+    demandOption: false,
+  })
+  .option("show-default-ignore", {
+    describe: "Show default ignore file",
+    type: "string",
+    demandOption: false,
+  })
   .version("v", "Display the version number", packageJson.version)
   .alias("v", "version").argv;
+
+const argv = yargsBuilder.argv;
 
 // Initialize variables
 let singleFileOutput = [];
 let layout = "";
 let layoutIncluded = false;
 let currentChunkSize = 0;
-let outputFileCounter = 1;
+let filePattern = "";
 
-// Handle filePattern RegExp
-const filePattern = new RegExp(
-  argv["file-pattern"] === "*"
-    ? ".*"
-    : convertWildcard(escapeRegExp(argv["file-pattern"]))
-);
-
+if (argv["file-pattern"]) {
+  // Handle filePattern RegExp
+  filePattern = new RegExp(
+    argv["file-pattern"] === "*"
+      ? ".*"
+      : convertWildcard(escapeRegExp(argv["file-pattern"]))
+  );
+}
 // Main execution function
 main().catch(handleError);
 
@@ -87,7 +105,7 @@ main().catch(handleError);
  * @param {Error} error - The error object caught
  */
 function handleError(error) {
-  if (true) {
+  if (!process.env.ENV) {
     console.error(`Unhandled error: ${error.message}`);
   } else {
     console.log(`${error.message}`);
@@ -101,11 +119,19 @@ function handleError(error) {
  * provided directory.
  */
 async function main() {
-  const ig = await readIgnoreFiles(argv["path-name"]);
+  if (argv["show-default-ignore"]) {
+    await showDefaultIgnore();
+    return;
+  }
+
+  const defaultIgnorePath =
+    argv["default-ignore"] || path.join(__dirname, ".defaultignore");
+  const ig = await readIgnoreFiles(argv["path-name"], defaultIgnorePath);
   if (!argv["suppress-layout"]) {
     // Initialize layout only if not suppressed
     layout = "/" + path.basename(argv["path-name"]) + "\n"; // Setting the initial layout
   }
+
   await processDirectory(argv["path-name"], argv["path-name"], ig);
   await writeAllOutputs(); // handle final output differently
 }
@@ -118,9 +144,11 @@ async function main() {
  * @returns {object} An ignore manager object with configured ignore rules.
  * @throws {Error} If there are issues reading or processing .ignore files.
  */
-async function readIgnoreFiles(dir) {
+async function readIgnoreFiles(dir, defaultIgnorePath = false) {
   const ig = ignore();
-  const defaultIgnorePath = path.join(__dirname, ".defaultignore");
+
+  if (!defaultIgnorePath)
+    defaultIgnorePath = path.join(__dirname, ".defaultignore");
 
   // Attempt to load .defaultignore with specific error handling
   try {
@@ -166,6 +194,20 @@ function filterIgnoreContent(content) {
     .split("\n")
     .filter((line) => line.trim() !== "" && !line.startsWith("#"))
     .join("\n");
+}
+
+/**
+ * Show the contents of the default ignore file.
+ */
+async function showDefaultIgnore() {
+  const defaultIgnorePath =
+    argv["default-ignore"] || path.join(__dirname, ".defaultignore");
+  try {
+    const defaultIgnoreContent = await fs.readFile(defaultIgnorePath, "utf8");
+    console.log(defaultIgnoreContent);
+  } catch (error) {
+    handleError(`Error reading default ignore file: ${error.message}`);
+  }
 }
 
 /**
