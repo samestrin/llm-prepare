@@ -1,4 +1,4 @@
-# llm-prepare
+# [llm-prepare](/)
 
 ## Example Prompts
 
