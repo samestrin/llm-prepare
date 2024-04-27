@@ -4,7 +4,7 @@
 
 ![Version 1.0.8](https://img.shields.io/badge/Version-1.0.12-blue) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Built with Node.js](https://img.shields.io/badge/Built%20with-Node.js-green)](https://nodejs.org/)
 
-**llm-prepare** converts complex project directory structures and files into a single flat or set of flat files for LLM processing using AI tools like ChatGPT, Claude, Gemini, Mistral, or ..?
+**llm-prepare** converts complex project directory structures and files into a single flat or set of flat files for AI processing using ChatGPT, Claude, Gemini, Mistral, or ..?
 
 This Nodes.js tool recursively scans a project directory based on provided arguments (at least a directory and file inclusion pattern). Then, it constructs a simplified layout view that includes all directories and file matches. The tool then combines the layout view with the aggregated file content of the entire project. The aggregated file content is stripped of comments and unnecessary whitespace by default. Output compression is also supported to reduce token use, and llm-prepare can handle large projects by chunking the output. Example prompts are included.
 
