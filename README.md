@@ -108,7 +108,7 @@ This will process all JavaScript files in the specified project directory, respe
   -v, --version              Display the version number                [boolean]
 ```
 
-## Contributing
+## Contribute
 
 Contributions to this project are welcome. Please fork the repository and submit a pull request with your changes or improvements.
 
