@@ -19,6 +19,7 @@ Once you've used llm-prepare your flat or set of flat files, you can use the out
   - **[php-phpdoc-comments](/example-prompts/simple-add-comments/php-phpdoc-comments.md)**: PHPDoc format
   - **[python-docstrings-comments](/example-prompts/simple-add-comments/python-docstrings-comments.md)**: Python Docstrings format
   - **[ruby-yard-comments](/example-prompts/simple-add-comments/ruby-yard-comments.md)**: Ruby YARD format
+  - **[rust-rustdoc-comments](/example-prompts/simple-add-comments/rust-rustdoc-comments.md)**: Rust Rustdoc format
   - **[typescript-tsdoc-comments](/example-prompts/simple-add-comments/typescript-tsdoc-comments.md)**: TypeScript TSDoc format
 
 ## Tested
