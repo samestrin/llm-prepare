@@ -6,7 +6,7 @@
 
 **llm-prepare** converts complex project directory structures and files into a single flat or set of flat files for AI processing using ChatGPT, Claude, Gemini, Mistral, or ..?
 
-This Node.js tool recursively scans a project directory based on provided arguments (at least a directory and file inclusion pattern). Then, it constructs a simplified layout view that includes all directories and file matches. The tool then combines the layout view with the aggregated file content of the entire project. The aggregated file content is stripped of comments and unnecessary whitespace by default. Output compression is also supported to reduce token use, and llm-prepare can handle large projects by chunking the output. Example prompts are included.
+This Node.js tool recursively scans a project directory based on provided arguments (at least a directory and file inclusion pattern). Then, it constructs a simplified layout view that includes all directories and file matches. The tool then combines the layout view with the aggregated text file content of the entire project after. The aggregated file content is stripped of comments and unnecessary whitespace by default. Output compression is also supported to reduce token use, and llm-prepare can handle large projects by chunking the output. Example prompts are included.
 
 ## Features
 
@@ -34,6 +34,7 @@ The [example prompts](/example-prompts/README.md) have been tested with ChatGPT 
 - **Node.js**: The script runs in a Node.js environment.
 - **fs-extra**: An extension of the standard Node.js `fs` module, providing additional methods and promise support.
 - **ignore**: Used to handle `.ignore` files similar to `.gitignore`.
+- **istextorbinary**: Determines whether a given file contains text or binary data.
 - **open**: Opens URLs in your default browser.
 - **yargs**: Helps in building interactive command line tools, by parsing arguments and generating an elegant user interface.
 - **yargs/helpers**: Provides utility methods for `yargs`.

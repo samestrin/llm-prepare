@@ -16,6 +16,7 @@ const ignore = require("ignore");
 const yargs = require("yargs/yargs");
 const { hideBin } = require("yargs/helpers");
 const packageJson = require("./package.json");
+const istextorbinary = require("istextorbinary");
 
 const yargsBuilder = yargs(hideBin(process.argv));
 
@@ -100,7 +101,7 @@ main(argv).catch(handleError);
  * @param {Error} error - The error object caught during execution.
  */
 function handleError(error) {
-  if (!process.env.ENV) {
+  if (!process.env.ENV && false) {
     console.error(`Unhandled error: ${error.message}`);
   } else {
     console.log(`${error.message}`);
@@ -118,22 +119,23 @@ function handleError(error) {
 async function main(argv) {
   let layout = "";
   let layoutIncluded = false;
-  const filePattern = new RegExp(
-    argv["file-pattern"] === "*"
-      ? ".*"
-      : convertWildcard(escapeRegExp(argv["file-pattern"]))
-  );
 
-  if (argv["show-default-ignore"]) {
+  if ("show-default-ignore" in argv) {
     await showDefaultIgnore();
     return;
-  } else if (argv["show-prompts"]) {
+  } else if ("show-prompts" in argv) {
     const open = (await import("open")).default;
     await open(
       "https://github.com/samestrin/llm-prepare/blob/main/example-prompts/README.md"
     );
     return;
   }
+
+  const filePattern = new RegExp(
+    argv["file-pattern"] === "*"
+      ? ".*"
+      : convertWildcard(escapeRegExp(argv["file-pattern"]))
+  );
 
   const ig = await readIgnoreFiles(argv["path-name"], argv["default-ignore"]);
 
@@ -153,7 +155,7 @@ async function main(argv) {
     []
   );
 
-  layout = "/" + argv["path-name"] + "\n" + updatedLayout;
+  layout = updatedLayout;
   layoutIncluded = layoutAlreadyIncluded;
 
   // Use the returned singleFileOutput from processDirectory
@@ -310,12 +312,18 @@ async function processDirectory(
       singleFileOutput = singleFileOutput.concat(childResult.singleFileOutput);
       layoutIncluded = childResult.layoutIncluded;
     } else if (stats.isFile() && filePattern.test(entry)) {
-      const content = await processFile(entryPath, argv);
-      singleFileOutput.push({
-        path: path.relative(baseDir, entryPath),
-        content: content,
-      });
-      layout += prefix + entry + "\n";
+      // Read the content of the file
+      let fileContent = await fs.readFile(entryPath, "utf-8");
+      if (!istextorbinary.isBinary(entryPath, fileContent)) {
+        // Process the file content
+        const content = await processFile(fileContent, entryPath, argv);
+
+        singleFileOutput.push({
+          path: path.relative(baseDir, entryPath),
+          content: content,
+        });
+        layout += prefix + entry + "\n";
+      }
     }
   }
 
@@ -327,15 +335,13 @@ async function processDirectory(
  * It may remove comments, normalize spaces, and condense newlines depending on the options
  * specified. It returns the processed content of the file.
  *
- * @param {string} filePath - The path to the file to be processed.
+ * @param {string} content - The content from the file to be processed.
+ * @param {string} filePath - The path for the file to be processed.
  * @param {object} argv - Command-line arguments that may affect file processing.
  * @returns {Promise<string>} The processed content of the file.
  */
-async function processFile(filePath, argv) {
+async function processFile(content, filePath, argv) {
   try {
-    // Read the content of the file
-    let content = await fs.readFile(filePath, "utf-8");
-
     // Perform any necessary transformations on the content based on command-line arguments
 
     if (content.trim().length === 0) {
@@ -437,12 +443,12 @@ async function writeAllOutputs(
   } else {
     // Manage layout only once at the start if not suppressed
     if (!layoutIncluded && !argv["suppress-layout"]) {
-      singleFileOutput.unshift(layout + "\n\n");
+      singleFileOutput.unshift(layout + "\n");
       layoutIncluded = true;
     }
 
     // For non-chunked output, directly write everything
-    await writeChunkOutput(singleFileOutput.join("\n"), 1, argv, layout);
+    await writeChunkOutput(singleFileOutput.join("\n"), 1, argv, "");
   }
 }
 
@@ -477,7 +483,7 @@ async function writeChunkOutput(output, index, argv, layout) {
     }
     // Write the output to the determined filename and log the result.
     try {
-      await fs.writeFile(indexedFilename, chunkOutput, "utf8");
+      await fs.writeFile(indexedFilename, chunkOutput.trim(), "utf8");
       console.log(`Output written to ${indexedFilename}`);
     } catch (error) {
       console.error(

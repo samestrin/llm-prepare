@@ -1,5 +1,6 @@
 # Default llm-prepare ignore rules
 
+.env
 .git
 .gitignore
 vendor
