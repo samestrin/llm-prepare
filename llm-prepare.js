@@ -116,7 +116,7 @@ function handleError(error) {
  * @param {object} argv - Command-line arguments parsed and structured.
  */
 async function main(argv) {
-  let layout = "/";
+  let layout = "";
   let layoutIncluded = false;
   const filePattern = new RegExp(
     argv["file-pattern"] === "*"
