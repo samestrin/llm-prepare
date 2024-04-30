@@ -89,28 +89,15 @@ yargsBuilder
 
 const argv = yargsBuilder.argv;
 
-// Initialize variables
-let singleFileOutput = [];
-let layout = "";
-let layoutIncluded = false;
-let currentChunkSize = 0;
-let filePattern = "";
-
-if (argv["file-pattern"]) {
-  // Handle filePattern RegExp
-  filePattern = new RegExp(
-    argv["file-pattern"] === "*"
-      ? ".*"
-      : convertWildcard(escapeRegExp(argv["file-pattern"]))
-  );
-}
 // Main execution function
-main().catch(handleError);
+main(argv).catch(handleError);
 
 /**
- * Centralized error handling function
+ * Handles errors by logging them differently based on the environment variable. If no environment
+ * variable is set, it logs the error to the console. If an environment variable is set, it logs both the
+ * error message and its stack trace.
  *
- * @param {Error} error - The error object caught
+ * @param {Error} error - The error object caught during execution.
  */
 function handleError(error) {
   if (!process.env.ENV) {
@@ -124,10 +111,18 @@ function handleError(error) {
 /**
  * The core execution function of the script. Sets up the directory layout,
  * reads and processes ignore files, and initiates the processing of the
- * provided directory.
+ * provided directory based on the command-line arguments.
+ *
+ * @param {object} argv - Command-line arguments parsed and structured.
  */
-async function main() {
-  // check for non-recursive actions
+async function main(argv) {
+  let layout = "/";
+  let layoutIncluded = false;
+  const filePattern = new RegExp(
+    argv["file-pattern"] === "*"
+      ? ".*"
+      : convertWildcard(escapeRegExp(argv["file-pattern"]))
+  );
 
   if (argv["show-default-ignore"]) {
     await showDefaultIgnore();
@@ -140,24 +135,40 @@ async function main() {
     return;
   }
 
-  const defaultIgnorePath =
-    argv["default-ignore"] || path.join(__dirname, ".defaultignore");
-  const ig = await readIgnoreFiles(argv["path-name"], defaultIgnorePath);
-  if (!argv["suppress-layout"]) {
-    // Initialize layout only if not suppressed
-    layout = "/" + path.basename(argv["path-name"]) + "\n"; // Setting the initial layout
-  }
+  const ig = await readIgnoreFiles(argv["path-name"], argv["default-ignore"]);
 
-  await processDirectory(argv["path-name"], argv["path-name"], ig);
-  await writeAllOutputs(); // handle final output differently
+  // Correctly destructure the returned values
+  const {
+    layout: updatedLayout,
+    singleFileOutput,
+    layoutIncluded: layoutAlreadyIncluded,
+  } = await processDirectory(
+    argv["path-name"],
+    argv["path-name"],
+    ig,
+    0,
+    [],
+    filePattern,
+    layout,
+    []
+  );
+
+  layout = updatedLayout;
+  layoutIncluded = layoutAlreadyIncluded;
+
+  // Use the returned singleFileOutput from processDirectory
+  await writeAllOutputs(singleFileOutput, layout, layoutIncluded, argv);
 }
 
 /**
  * Reads and processes .ignore files (like .gitignore) within the specified directory,
- * configuring an ignore manager for filtering files and directories.
+ * configuring an ignore manager for filtering files and directories based on ignore rules.
+ * It also handles custom default ignore files. This function throws an error if issues
+ * arise while reading or processing ignore files.
  *
  * @param {string} dir - The directory to search for .ignore files.
- * @returns {object} An ignore manager object with configured ignore rules.
+ * @param {string} [defaultIgnorePath] - Optional path to a custom default ignore file.
+ * @returns {Promise<object>} An ignore manager object with configured ignore rules.
  * @throws {Error} If there are issues reading or processing .ignore files.
  */
 async function readIgnoreFiles(dir, defaultIgnorePath = false) {
@@ -196,14 +207,11 @@ async function readIgnoreFiles(dir, defaultIgnorePath = false) {
 }
 
 /**
- * Filters out empty lines and comments from .ignore file content.
+ * Filters out empty lines and comments from .ignore file content, preparing it for
+ * processing. It returns the filtered content with no empty lines or comment lines.
  *
- * This function is intended to process the content of ignore files such as .gitignore,
- * .dockerignore, etc. It removes all lines that are either empty or start with a '#',
- * which are considered comments in many ignore file formats.
- *
- * @param {string} content - The content of an ignore file
- * @returns {string} Filtered content with no empty lines or comment lines
+ * @param {string} content - The content of an ignore file.
+ * @returns {string} Filtered content suitable for further processing.
  */
 function filterIgnoreContent(content) {
   return content
@@ -213,7 +221,10 @@ function filterIgnoreContent(content) {
 }
 
 /**
- * Show the contents of the default ignore file.
+ * Shows the contents of the default ignore file configured in the system. This function
+ * reads the content of the specified default ignore file and prints it to the console.
+ *
+ * @throws {Error} If there is an error reading the default ignore file.
  */
 async function showDefaultIgnore() {
   const defaultIgnorePath =
@@ -227,14 +238,12 @@ async function showDefaultIgnore() {
 }
 
 /**
- * Checks if a specific file exists in the filesystem.
- *
- * This function uses the fs.access method to determine if the file is accessible,
- * which indirectly checks if the file exists without opening it. This method is preferred
- * for checking file existence without manipulating the file itself.
+ * Checks if a specific file exists in the filesystem using the fs.access method. This method
+ * is used to determine if the file is accessible, which indirectly checks if the file exists
+ * without opening it. It returns true if the file exists and false otherwise.
  *
  * @param {string} filePath - The full path to the file whose existence needs to be checked.
- * @returns {Promise<boolean>} A promise that resolves to true if the file exists, false if it does not.
+ * @returns {Promise<boolean>} True if the file exists, false otherwise.
  */
 async function fileExists(filePath) {
   try {
@@ -246,145 +255,213 @@ async function fileExists(filePath) {
 }
 
 /**
- * Recursively processes a directory, applying ignore rules, building a layout,
- * and preparing file content for output.
+ * Processes the directory and its subdirectories recursively to build a flat file
+ * output and a directory layout. It filters entries based on ignore rules and constructs
+ * an ASCII layout of the directory structure. It returns an object containing the layout for
+ * this directory and the file contents.
  *
- * @param {string} dir - The current directory to process
- * @param {string} [baseDir=dir] - The base directory for relative paths
- * @param {object} ig - The ignore manager for applying file/directory exclusions
- * @param {number} [depth=0] - The current depth in the directory tree
- * @param {Array} lastItemStack - Tracks if the current item is the last at each depth
+ * @param {string} dir - The current directory to process.
+ * @param {string} baseDir - The base directory for relative path calculations.
+ * @param {object} ig - The ignore manager object with configured ignore rules.
+ * @param {number} depth - The current depth in the directory structure.
+ * @param {Array} lastItemStack - A stack indicating if the current directory is the last in its level.
+ * @param {RegExp} filePattern - The pattern to filter files that need to be processed.
+ * @param {boolean} layoutIncluded - Indicates if the layout has already been added.
+ * @returns {Promise<object>} An object containing the layout for this directory and the file contents.
  */
 async function processDirectory(
   dir,
-  baseDir = dir,
+  baseDir,
   ig,
-  depth = 0,
-  lastItemStack = []
+  depth,
+  lastItemStack,
+  filePattern,
+  layoutIncluded
 ) {
-  const dirExists = await fs.pathExists(dir);
-  if (!dirExists) {
-    console.error(`Directory does not exist: ${dir}`);
-    return; // Exit if directory does not exist
-  }
-
+  let layout = depth === 0 && !layoutIncluded ? `/${argv["path-name"]}\n` : "";
+  let singleFileOutput = [];
   const entries = await fs.readdir(dir);
-  const notIgnoredEntries = ig.filter(entries).sort(); // Sort for consistent output
+  const notIgnoredEntries = ig.filter(entries).sort();
 
-  // Update lastItemStack for current depth
-  lastItemStack[depth] = false; // Reset current depth status
-
-  // Process each entry in the directory
   for (let i = 0; i < notIgnoredEntries.length; i++) {
-    lastItemStack[depth] = i === notIgnoredEntries.length - 1; // Update last item status at current depth
-
     const entry = notIgnoredEntries[i];
     const entryPath = path.join(dir, entry);
     const stats = await fs.stat(entryPath);
 
-    // Build prefix with adjusted layout for last items
-    let prefix = "";
-    for (let j = 0; j <= depth; j++) {
-      if (j == depth) {
-        // Current depth, decide based on lastItemStack
-        prefix += lastItemStack[j] ? "└── " : "├── ";
-      } else {
-        prefix += lastItemStack[j] ? "    " : "│   ";
-      }
-    }
+    let prefix = computePrefix(
+      depth,
+      lastItemStack,
+      i,
+      notIgnoredEntries.length
+    );
 
     if (stats.isDirectory()) {
-      // Append directory to layout
-      layout += prefix + entry + "/\n";
-      // Recursive call to process subdirectory
-      await processDirectory(entryPath, baseDir, ig, depth + 1, lastItemStack);
+      const childResult = await processDirectory(
+        entryPath,
+        baseDir,
+        ig,
+        depth + 1,
+        lastItemStack.concat(i === notIgnoredEntries.length - 1),
+        filePattern,
+        layoutIncluded
+      );
+
+      layout += prefix + entry + "/\n" + childResult.layout;
+      singleFileOutput = singleFileOutput.concat(childResult.singleFileOutput);
+      layoutIncluded = childResult.layoutIncluded;
     } else if (stats.isFile() && filePattern.test(entry)) {
-      // Append file to layout
+      const content = await processFile(entryPath, argv);
+      singleFileOutput.push({
+        path: path.relative(baseDir, entryPath),
+        content: content,
+      });
       layout += prefix + entry + "\n";
-
-      let content = await fs.readFile(entryPath, "utf8");
-      if (content.trim().length === 0) continue; // Skip empty files
-
-      if (!argv["include-comments"]) {
-        content = content.replace(/\/\*[\s\S]*?\*\//g, ""); // Remove block comments
-        content = content.replace(/\/\/.*$/gm, ""); // Remove single-line comments
-      }
-
-      content = content.replace(/[ \t]+/g, " "); // Normalize spaces and tabs
-
-      if (argv["compress"]) {
-        content = content.replace(/\s+/g, " ").trim(); // Compress whitespace
-      } else {
-        content = content.replace(/(?:\r\n|\r|\n){2,}/g, "\n"); // Condense newlines
-      }
-
-      let fileContent =
-        `
-
-/** File: ${path.relative(
-          baseDir,
-          entryPath
-        )} ***************************************/
-
-` +
-        content +
-        "\n";
-
-      singleFileOutput.push(fileContent);
     }
   }
+
+  return { layout, singleFileOutput, layoutIncluded };
+}
+
+/**
+ * Processes the content of an individual file based on the provided command-line arguments.
+ * It may remove comments, normalize spaces, and condense newlines depending on the options
+ * specified. It returns the processed content of the file.
+ *
+ * @param {string} filePath - The path to the file to be processed.
+ * @param {object} argv - Command-line arguments that may affect file processing.
+ * @returns {Promise<string>} The processed content of the file.
+ */
+async function processFile(filePath, argv) {
+  try {
+    // Read the content of the file
+    let content = await fs.readFile(filePath, "utf-8");
+
+    // Perform any necessary transformations on the content based on command-line arguments
+
+    if (content.trim().length === 0) {
+      return ""; // Skip empty files
+    }
+
+    if (!argv["include-comments"]) {
+      // Regular expression for removing block comments
+      content = content.replace(/\/\*(?!.*https?:\/\/)[\s\S]*?\*\//g, "");
+      // Regular expression for removing single-line comments
+      content = content.replace(/\/\/(?!.*https?:\/\/).*$/gm, "");
+    }
+
+    content = content.replace(/[ \t]+/g, " "); // Normalize spaces and tabs
+
+    if (argv["compress"]) {
+      content = content.replace(/\s+/g, " ").trim(); // Compress whitespace
+    } else {
+      content = content.replace(/(?:\r\n|\r|\n){2,}/g, "\n"); // Condense newlines
+    }
+
+    return `
+/** File: /${path.relative(
+      process.cwd(),
+      filePath
+    )} ***************************************/
+${content}
+`;
+  } catch (error) {
+    // Handle errors while reading the file
+    console.error(`Error processing file ${filePath}: ${error.message}`);
+    return ""; // Return an empty string in case of errors
+  }
+}
+
+/**
+ * Computes the prefix for directory entries in the layout based on the current depth
+ * and the last item status at each depth. It generates a prefix string that represents
+ * the hierarchical structure of directories.
+ *
+ * @param {number} depth - The current depth in the directory tree.
+ * @param {Array} lastItemStack - Tracks if the current item is the last at each depth.
+ * @param {number} currentIndex - The index of the current item in the entries array.
+ * @param {number} totalEntries - The total number of entries in the directory.
+ * @returns {string} The computed prefix for the directory entry.
+ */
+function computePrefix(depth, lastItemStack, currentIndex, totalEntries) {
+  let prefix = "";
+  for (let j = 0; j < depth; j++) {
+    prefix += lastItemStack[j] ? "    " : "│   ";
+  }
+  prefix += currentIndex === totalEntries - 1 ? "└── " : "├── ";
+  return prefix;
 }
 
 /**
  * Handles output writing, including chunking data (if configured) and managing
  * the inclusion of the directory layout.
+ *
+ * @param {Array} singleFileObjOutput - Array of file contents to be written.
+ * @param {string} layout - The directory layout to be included in the output.
+ * @param {boolean} layoutIncluded - Indicates whether the layout has already been added.
+ * @param {object} argv - Command-line arguments that might affect output handling.
  */
-async function writeAllOutputs() {
-  // Check if chunking is necessary
+async function writeAllOutputs(
+  singleFileObjOutput,
+  layout,
+  layoutIncluded,
+  argv
+) {
+  // process singleFileOutput
+
+  let singleFileOutput = singleFileObjOutput.map((item) => item.content);
 
   if (argv["chunk-size"]) {
     let currentOutput = "";
     let accumulatedSize = 0;
     const chunks = [];
 
-    await addLayout();
-
-    // Break the output into chunks
     for (const content of singleFileOutput) {
       if (accumulatedSize + content.length > argv["chunk-size"] * 1024) {
-        chunks.push(currentOutput);
+        chunks.push(currentOutput.trim());
         currentOutput = "";
-        accumulatedSize = 0;
+        accumulatedSize = layout.length;
       }
       currentOutput += content;
       accumulatedSize += content.length;
     }
+
+    // Push the last chunk if any content remains
     if (currentOutput) {
-      chunks.push(currentOutput);
+      chunks.push(currentOutput.trim());
     }
 
-    // Write chunks in reverse if layout needs to be in the first
-    for (let i = chunks.length - 1; i >= 0; i--) {
-      await writeChunkOutput(chunks[i].trim(), i + 1);
+    // Write each chunk to output
+    for (let i = 0; i < chunks.length; i++) {
+      await writeChunkOutput(chunks[i], i + 1, argv, layout);
     }
   } else {
-    // No chunking, just write everything
-    await writeChunkOutput(layout + singleFileOutput.join("\n"), 1);
+    // Manage layout only once at the start if not suppressed
+    if (!layoutIncluded && !argv["suppress-layout"]) {
+      singleFileOutput.unshift(layout + "\n\n");
+      layoutIncluded = true;
+    }
+
+    // For non-chunked output, directly write everything
+    await writeChunkOutput(singleFileOutput.join("\n"), 1, argv, layout);
   }
 }
 
 /**
  * Writes a chunk of processed output to a file, or logs it to the console
- * if no filename is provided.  Handles errors during the file writing process.
+ * if no filename is provided. Handles errors during the file writing process. It includes
+ * the layout at the beginning of the first chunk if specified.
  *
  * @param {string} output - The content to be written.
- * @param {number} index -  The index of the chunk (for file naming).
+ * @param {number} index - The index of the chunk (for file naming).
+ * @param {object} argv - Command-line arguments that may specify the output filename and other options.
+ * @param {string} layout - The directory layout to be included at the beginning of each chunk.
  */
-async function writeChunkOutput(output, index) {
+async function writeChunkOutput(output, index, argv, layout) {
   let filename = argv["output-filename"];
   if (!filename) {
     console.log("Error: No filename provided."); // If no filename provided, output to console
   } else {
+    // Determine the full filename for the output, appending the chunk index if needed.
     const extension = path.extname(filename);
     const baseName = path.basename(filename, extension);
     const indexedFilename =
@@ -392,22 +469,21 @@ async function writeChunkOutput(output, index) {
         ? `${baseName}${extension}`
         : `${baseName}.${index}${extension}`;
 
-    await fs.writeFile(indexedFilename, output, "utf8");
-    console.log(`Output written to ${indexedFilename}`);
-  }
-}
-
-/**
- * Prepends the directory layout to the output buffer if it's not already included
- * and if the layout is not suppressed by the user. Ensures the layout is only
- * added once.
- */
-async function addLayout() {
-  // Handle the layout display for single files
-  if (!layoutIncluded && !argv["suppress-layout"]) {
-    singleFileOutput.unshift(layout); // Prepend layout if not already included
-    currentChunkSize += layout.length;
-    layoutIncluded = true; // Set flag to avoid duplicating the layout
+    // Include layout at the beginning of each chunk
+    if (index === 1) {
+      chunkOutput = layout + "\n\n" + output;
+    } else {
+      chunkOutput = output;
+    }
+    // Write the output to the determined filename and log the result.
+    try {
+      await fs.writeFile(indexedFilename, chunkOutput, "utf8");
+      console.log(`Output written to ${indexedFilename}`);
+    } catch (error) {
+      console.error(
+        `Failed to write output to ${indexedFilename}: ${error.message}`
+      );
+    }
   }
 }
 
