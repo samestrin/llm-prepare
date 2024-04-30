@@ -153,7 +153,7 @@ async function main(argv) {
     []
   );
 
-  layout = updatedLayout;
+  layout = "/" + argv["path-name"] + "\n" + updatedLayout;
   layoutIncluded = layoutAlreadyIncluded;
 
   // Use the returned singleFileOutput from processDirectory
