@@ -22,12 +22,13 @@ This Node.js tool recursively scans a project directory based on provided argume
 ## Example Prompts
 
 - **code-review**: Interactive code review with a simulated senior software engineer.
-- **readme-generation**: Interactive technical README.md generation with a simulated senior technical writer.
-- **simple-add-comments**: A set of simple prompts that generate comments based on your code (C#, Javascipt, PHP, Python, Ruby, and TypeScript).
-- **technical-document-generation**: Interactive technical document generation with a simulated senior technical writer.
+- **question-and-answer**: Interactive question and answer with your code.
+- **readme-generation**: A simulated senior technical writer generates a README.md based on your code.
+- **simple-add-comments**: A set of simple prompts that generate comments based on your code (C#, Javascipt, PHP, Python, Ruby, Rust, and TypeScript).
+- **technical-document-generation**: A simulated senior technical writer generates technical documentation based on your code.
 - **test-generation**: Interactive test generation with a simulated senior software engineer and simulated QA.
 
-The [example prompts](/example-prompts/README.md) have been tested with ChatGPT GPT-4.
+Plus many more (_including new CSV oriented prompts_). All [example prompts](/example-prompts/README.md) have been tested with ChatGPT GPT-4.
 
 ## Dependencies
 
