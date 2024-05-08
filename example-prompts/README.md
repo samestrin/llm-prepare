@@ -13,7 +13,7 @@ Once you've used llm-prepare your flat or set of flat files, you can use the out
 - **[CSV](/interactive-prompts/csv/)**: A set of interactive CSV related prompts.
   - **[Extract Named Entities](/example-prompts/interactive-prompts/csv/extract-named-entities.md)**: Interactively extract user defined named entities.
   - **[Generate Chart (Experimental)](/example-prompts/interactive-prompts/csv/generate-chart.experimental.md)**: Use GPT-4 and DALL-E to generate charts based on CSV data. _This prompt is experimental._
-  - **[Question And Answer](/example-prompts/interactive-prompts/csv/question-and-answer.md)**: Ask questions and get answers from your CSV data.
+  - **[Question and Answer](/example-prompts/interactive-prompts/csv/question-and-answer.md)**: Ask questions and get answers from your CSV data.
 
 #### Simple Prompts
 
