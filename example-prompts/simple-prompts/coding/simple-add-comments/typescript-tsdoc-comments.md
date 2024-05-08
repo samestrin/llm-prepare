@@ -23,3 +23,5 @@ function calculateArea(width: number, height: number = 100): number {
 ```
 
 CODE:
+
+<insert your llm-prepare output here>
