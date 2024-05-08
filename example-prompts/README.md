@@ -4,7 +4,7 @@
 
 Once you've used llm-prepare your flat or set of flat files, you can use the output with these example prompts.
 
-#### interactive Prompts
+#### Interactive Prompts
 
 - **[coding](/example-prompts/interactive-prompts/coding/)**: A set of interactive code related prompts.
   - **[code-review](/example-prompts/interactive-prompts/coding/code-review.md)**: Interactive code review with a simulated senior software engineer.
@@ -16,13 +16,14 @@ Once you've used llm-prepare your flat or set of flat files, you can use the out
   - **[generate-chart (experimental)](/example-prompts/interactive-prompts/csv/generate-chart.experimental.md)**: Use GPT-4 and DALL-E to generate charts based on CSV data. _This prompt is experimental._
   - **[question-and-answer](/example-prompts/interactive-prompts/csv/question-and-answer.md)**: Ask questions and get answers from your CSV data.
 
-#### simple Prompts
+#### Simple Prompts
 
-- **[coding](/example-prompts/simple-prompts/coding/)**: A set of simple coding oriented prompts. _All comment oriented for the time being._
+- **[coding](/example-prompts/simple-prompts/coding/)**: A set of simple coding oriented prompts.
   - **[csharp-xml-documentation](/example-prompts/simple-prompts/coding/simple-add-comments/csharp-xml-documentation.md)**: C# XML Document format
   - **[js-jsdoc-comments](/example-prompts/simple-prompts/coding/simple-add-comments/js-jsdoc-comments.md)**: JSDoc format
   - **[php-phpdoc-comments](/example-prompts/simple-prompts/coding/simple-add-comments/php-phpdoc-comments.md)**: PHPDoc format
   - **[python-docstrings-comments](/example-prompts/simple-prompts/coding/simple-add-comments/python-docstrings-comments.md)**: Python Docstrings format
+  - **[readme-generation](/example-prompts/simple-prompts/readme-generation.md)**: Quickly generate a README.md for your project.
   - **[ruby-yard-comments](/example-prompts/simple-prompts/coding/simple-add-comments/ruby-yard-comments.md)**: Ruby YARD format
   - **[rust-rustdoc-comments](/example-prompts/simple-prompts/coding/simple-add-comments/rust-rustdoc-comments.md)**: Rust Rustdoc format
   - **[typescript-tsdoc-comments](/example-prompts/simple-prompts/coding/simple-add-comments/typescript-tsdoc-comments.md)**: TypeScript TSDoc format
