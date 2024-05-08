@@ -12,3 +12,5 @@ Please review the provided CSV provided carefully, evaluating the content of eac
 Make sure that the PRIMARY KEY is NOT NULL, and AUTO_INCREMENT. Show the CREATE TABLE statement titled "MySQL CREATE TABLE Statement".
 
 CSV content
+
+<insert your llm-prepare output here>
