@@ -19,14 +19,14 @@ Once you've used llm-prepare your flat or set of flat files, you can use the out
 #### Simple Prompts
 
 - **[coding](/example-prompts/simple-prompts/coding/)**: A set of simple coding oriented prompts.
-  - **[csharp-xml-documentation](/example-prompts/simple-prompts/coding/simple-add-comments/csharp-xml-documentation.md)**: C# XML Document format
-  - **[js-jsdoc-comments](/example-prompts/simple-prompts/coding/simple-add-comments/js-jsdoc-comments.md)**: JSDoc format
-  - **[php-phpdoc-comments](/example-prompts/simple-prompts/coding/simple-add-comments/php-phpdoc-comments.md)**: PHPDoc format
-  - **[python-docstrings-comments](/example-prompts/simple-prompts/coding/simple-add-comments/python-docstrings-comments.md)**: Python Docstrings format
+  - **[csharp-xml-documentation](/example-prompts/simple-prompts/coding/simple-add-comments/csharp-xml-documentation.md)**: Generate C# XML Document format comments.
+  - **[js-jsdoc-comments](/example-prompts/simple-prompts/coding/simple-add-comments/js-jsdoc-comments.md)**: Generate JSDoc format comments.
+  - **[php-phpdoc-comments](/example-prompts/simple-prompts/coding/simple-add-comments/php-phpdoc-comments.md)**: Generate PHPDoc format comments.
+  - **[python-docstrings-comments](/example-prompts/simple-prompts/coding/simple-add-comments/python-docstrings-comments.md)**: Generate Python Docstrings format comments.
   - **[readme-generation](/example-prompts/simple-prompts/readme-generation.md)**: Quickly generate a README.md for your project.
-  - **[ruby-yard-comments](/example-prompts/simple-prompts/coding/simple-add-comments/ruby-yard-comments.md)**: Ruby YARD format
-  - **[rust-rustdoc-comments](/example-prompts/simple-prompts/coding/simple-add-comments/rust-rustdoc-comments.md)**: Rust Rustdoc format
-  - **[typescript-tsdoc-comments](/example-prompts/simple-prompts/coding/simple-add-comments/typescript-tsdoc-comments.md)**: TypeScript TSDoc format
+  - **[ruby-yard-comments](/example-prompts/simple-prompts/coding/simple-add-comments/ruby-yard-comments.md)**: Generate Ruby YARD format comments.
+  - **[rust-rustdoc-comments](/example-prompts/simple-prompts/coding/simple-add-comments/rust-rustdoc-comments.md)**: Generate Rust Rustdoc format comments.
+  - **[typescript-tsdoc-comments](/example-prompts/simple-prompts/coding/simple-add-comments/typescript-tsdoc-comments.md)**: Generate TypeScript TSDoc format comments.
 - **[csv](/example-prompts/simple-prompts/csv/)**: A set of simple CSV oriented prompts.
   - **[extract-all-named-entities](/example-prompts/simple-prompts/csv/extract-all-named-entities.md)**: Extract all named entities, including People, Organizations, Locations, Companies, and Products.
   - **[generate-summary](/example-prompts/simple-prompts/csv/generate-summary.md)**: Show the breakdown of the data structure, and provide a human readable summary of the information.
