@@ -34,4 +34,4 @@ Once you've used llm-prepare your flat or set of flat files, you can use the out
 
 ## Tested
 
-All example prompts have been tested with [ChatGPT GPT-4](https://chat.openai.com/) but are not guaranteed; LLM updates can result in changes to the output of prompts.
+All example prompts have been tested with [ChatGPT GPT-4](https://chatgpt.com/) but are not guaranteed; LLM updates can result in changes to the output of prompts.
