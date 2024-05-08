@@ -21,12 +21,13 @@ This Node.js tool recursively scans a project directory based on provided argume
 
 ## Example Prompts
 
-- **code-review**: Interactive code review with a simulated senior software engineer.
-- **question-and-answer**: Interactive question and answer session powered by your project code.
-- **readme-generation**: A simulated senior technical writer generates a README.md based on your project code.
-- **simple-add-comments**: A set of simple prompts that generate comments based on your project code (C#, Javascipt, PHP, Python, Ruby, Rust, and TypeScript).
-- **technical-document-generation**: A simulated senior technical writer generates technical documentation based on your project code.
-- **test-generation**: Interactive test generation with a simulated senior software engineer and simulated QA.
+- **Code Review**: Interactive code review with a simulated senior software engineer.
+- **Generate MySQL Create Table**: Generate a MySQL `CREATE TABLE` statement based on your provided CSV content.
+- **Question and Answer**: Interactive question and answer session powered by your project code.
+- **Readme Generation**: A simulated senior technical writer generates a README.md based on your project code.
+- **Simple Add Comments**: A set of simple prompts that generate comments based on your project code (C#, Javascript, PHP, Python, Ruby, Rust, and TypeScript).
+- **Technical Document Generation**: A simulated senior technical writer generates technical documentation based on your project code.
+- **Test Generation**: Interactive test generation with a simulated senior software engineer and simulated QA.
 
 Plus many more (_including new CSV oriented prompts_). All [example prompts](/example-prompts/README.md) have been tested with ChatGPT GPT-4.
 
