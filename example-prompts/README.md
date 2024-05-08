@@ -4,7 +4,7 @@
 
 Once you've used llm-prepare your flat or set of flat files, you can use the output with these example prompts.
 
-### Interactive Prompts
+#### interactive Prompts
 
 - **[coding](/example-prompts/interactive-prompts/coding/)**: A set of interactive code related prompts.
   - **[code-review](/example-prompts/interactive-prompts/coding/code-review.md)**: Interactive code review with a simulated senior software engineer.
@@ -16,7 +16,7 @@ Once you've used llm-prepare your flat or set of flat files, you can use the out
   - **[generate-chart (experimental)](/example-prompts/interactive-prompts/csv/generate-chart.experimental.md)**: Use GPT-4 and DALL-E to generate charts based on CSV data. _This prompt is experimental._
   - **[question-and-answer](/example-prompts/interactive-prompts/csv/question-and-answer.md)**: Ask questions and get answers from your CSV data.
 
-### Simple Prompts
+#### simple Prompts
 
 - **[coding](/example-prompts/simple-prompts/coding/)**: A set of simple coding oriented prompts. _All comment oriented for the time being._
   - **[csharp-xml-documentation](/example-prompts/simple-prompts/coding/simple-add-comments/csharp-xml-documentation.md)**: C# XML Document format
