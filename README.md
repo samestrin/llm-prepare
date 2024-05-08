@@ -40,11 +40,11 @@ Plus many more (_including new CSV oriented prompts_). All [example prompts](/ex
 - **yargs**: Helps in building interactive command line tools, by parsing arguments and generating an elegant user interface.
 - **yargs/helpers**: Provides utility methods for `yargs`.
 
-## Installation
+## Installing Node.js
 
 Before installing, ensure you have Node.js and npm (Node Package Manager) installed on your system. You can download and install Node.js from [Node.js official website](https://nodejs.org/).
 
-### Installation
+## Installing llm-prepare
 
 To install and use llm-prepare, follow these steps:
 
