@@ -1,3 +1,5 @@
+#### interactive-prompts/coding/technical-document-generation - Copyright (c) 2024-PRESENT Sam Estrin <https://github.com/samestrin/llm-prepare>
+
 Follow these steps, one at a time, continuing to the next step after completion. Show questions asked in bold.
 
 Step 1. Ask, "What code would you like me to review?"; this is the codeToDocument.
