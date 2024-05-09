@@ -8,3 +8,5 @@ node_modules
 *.lock
 *.json
 .DS_Store
+__pycache__
+venv
