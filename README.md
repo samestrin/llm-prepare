@@ -10,9 +10,13 @@ This Node.js tool recursively scans a project directory based on provided argume
 
 ## In-Context Learning (ICL)
 
+> "Researchers have found that giving large language models (LLMs) many examples directly in the prompt can be more effective than time-consuming fine-tuning, according to a study from Carnegie Mellon and Tel Aviv University"
+
 In-Context Learning (ICL) allows a Large Language Model (LLM) to perform tasks by interpreting the context provided within the prompt without additional training or fine-tuning. This approach differs significantly from previous methods where models were explicitly trained on a specific task using vast datasets. Instead, ICL leverages the model's pre-trained knowledge base—a comprehensive understanding accumulated during its initial extensive training phase.
 
 As the token size—or the amount of data that an LLM can process and generate in a single instance—has dramatically increased, the value of ICL has become even more significant. This increase in token size allows LLMs to handle longer and more complex inputs and outputs, which enhances their ability to understand and generate sophisticated text.
+
+[Massive prompts can outperform fine-tuning for LLMs, researchers find](https://the-decoder.com/massive-prompts-outperform-fine-tuning-for-llms-in-new-study-researchers-find/)
 
 ## Features
 
