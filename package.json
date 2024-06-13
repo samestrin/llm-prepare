@@ -1,7 +1,7 @@
 {
   "name": "llm-prepare",
-  "version": "1.0.13",
-  "description": "llm-prepare converts complex project directory structures and files into a single flat or set of flat files for LLM processing using tools like ChatGPT, Claude, Gemini, or Mistral.",
+  "version": "1.0.14",
+  "description": "llm-prepare converts complex project directory structures and files into a single flat file or a set of flat files, facilitating processing using In-Context Learning (ICL) prompts.",
   "author": "Sam Estrin",
   "license": "MIT",
   "bugs": {

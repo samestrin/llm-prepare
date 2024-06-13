@@ -4,7 +4,7 @@
 
 ![Version 1.0.13](https://img.shields.io/badge/Version-1.0.13-blue) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Built with Node.js](https://img.shields.io/badge/Built%20with-Node.js-green)](https://nodejs.org/)
 
-**llm-prepare** converts complex project directory structures and files into a single flat or set of flat files facilitating processing using In-Context Learning (ICL) with AI models such as ChatGPT, Claude, Gemini, Mistral, or ..?
+**llm-prepare** converts complex project directory structures and files into a single flat file or a set of flat files, facilitating processing using In-Context Learning (ICL) prompts.
 
 This Node.js tool recursively scans a project directory based on provided arguments (at least a directory and file inclusion pattern). Then, it constructs a simplified layout view that includes all directories and file matches. The tool then combines the layout view with the aggregated text file content of the entire project. The aggregated file content is stripped of comments and unnecessary whitespace by default. Output compression is also supported to reduce token use, and llm-prepare can handle large projects by chunking the output. Example prompts are included.
 
@@ -93,15 +93,45 @@ For Windows, ensure that Node.js is added to your PATH during the installation. 
 
 ## Usage
 
-To run the script, you need to provide two mandatory arguments: the path to the project directory (`--path-name`) and the pattern of files to include (`--file-pattern`).
+To run the script, you need to provide one mandatory argument: the path to the project directory (`--path-name` or `-p`).
 
-Example:
+### Common Usage Examples:
+
+**Basic Usage:**
+This will process all files in the specified project directory, respecting any `.ignore` files, and output the consolidated content and structure to your console.
+Defaults the file pattern to "\*"
 
 ```bash
-llm-prepare --path-name "/path/to/project" --file-pattern "*.js"
+llm-prepare -p "/path/to/project"
 ```
 
+or
+
+```bash
+llm-prepare --path-name "/path/to/project"
+```
+
+**Specify a File Pattern:**
 This will process all JavaScript files in the specified project directory, respecting any `.ignore` files, and output the consolidated content and structure to your console.
+
+```bash
+llm-prepare -p "/path/to/project" -f "*.js"
+```
+
+**Specify an Output Filename:**
+This will process all files in the specified project directory, respecting any `.ignore` files, and output the consolidated content and structure to _output.txt_.
+
+```bash
+llm-prepare -p "/path/to/project" -o "output.txt"
+```
+
+If you don't specific a filename, this will process all files in the specified project directory, respecting any `.ignore` files, and output the consolidated content and structure to _project.txt_. The filename is auto-generated based on the top level directory in the path-name variable.
+
+```bash
+llm-prepare -p "/path/to/project" -o
+```
+
+You may optionally set the **LLM_PREPARE_OUTPUT_DIR** environment variable. If the LLM_PREPARE_OUTPUT_DIR environment variable is set, the output files are written to that directory.
 
 ## Options
 
@@ -109,7 +139,7 @@ This will process all JavaScript files in the specified project directory, respe
       --help                 Show help                                 [boolean]
   -p, --path-name            Path to the project directory   [string] [required]
   -f, --file-pattern         Pattern of files to include, e.g., '\.js$' or '*'
-                             for all files                   [string] [required]
+                             for all files               [string] [default: "*"]
   -o, --output-filename      Output filename                            [string]
   -i, --include-comments     Include comments? (Default: false)        [boolean]
   -c, --compress             Compress? (Default: false)                [boolean]

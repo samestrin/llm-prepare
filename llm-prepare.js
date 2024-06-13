@@ -42,7 +42,7 @@ if (
       describe:
         "Pattern of files to include, e.g., '\\.js$' or '*' for all files",
       type: "string",
-      demandOption: true,
+      default: "*", // Set default value to "*"
     });
 }
 yargsBuilder
@@ -137,9 +137,7 @@ async function main(argv) {
   }
 
   const filePattern = new RegExp(
-    argv["file-pattern"] === "*"
-      ? ".*"
-      : convertWildcard(escapeRegExp(argv["file-pattern"]))
+    convertWildcard(escapeRegExp(argv["file-pattern"]))
   );
 
   const ig = await readIgnoreFiles(argv["path-name"], argv["default-ignore"]);
@@ -165,6 +163,22 @@ async function main(argv) {
 
   // Use the returned singleFileOutput from processDirectory
   await writeAllOutputs(singleFileOutput, layout, layoutIncluded, argv);
+}
+
+/**
+ * Generates an output filename based on the provided path name.
+ *
+ * @param {string} pathName - The path to the directory.
+ * @returns {string} The generated filename based on the directory name.
+ * @throws {Error} No specific errors are thrown by this function, but it assumes the provided path is valid.
+ *
+ * @example
+ * // If the directory path is './path/directoryname', it returns 'directoryname.txt'
+ * generateOutputFilename('./path/directoryname');
+ */
+function generateOutputFilename(pathName) {
+  const baseDir = path.basename(path.resolve(pathName));
+  return `${baseDir}.txt`;
 }
 
 /**
@@ -459,42 +473,65 @@ async function writeAllOutputs(
 
 /**
  * Writes a chunk of processed output to a file, or logs it to the console
- * if no filename is provided. Handles errors during the file writing process. It includes
- * the layout at the beginning of the first chunk if specified.
+ * if no filename is provided. Handles errors during the file writing process.
+ * It includes the layout at the beginning of the first chunk if specified.
+ * If the LLM_PREPARE_OUTPUT_DIR environment variable is set, the output files
+ * are written to that directory.
  *
  * @param {string} output - The content to be written.
  * @param {number} index - The index of the chunk (for file naming).
  * @param {object} argv - Command-line arguments that may specify the output filename and other options.
  * @param {string} layout - The directory layout to be included at the beginning of each chunk.
+ * @throws {Error} If there is an error writing the file.
+ *
+ * @example
+ * // Write output to a specified filename or to a directory if the environment variable is set.
+ * writeChunkOutput("content", 1, { "output-filename": "output.txt" }, "layout");
  */
 async function writeChunkOutput(output, index, argv, layout) {
   let filename = argv["output-filename"];
-  if (!filename) {
-    console.log("Error: No filename provided."); // If no filename provided, output to console
-  } else {
-    // Determine the full filename for the output, appending the chunk index if needed.
-    const extension = path.extname(filename);
-    const baseName = path.basename(filename, extension);
-    const indexedFilename =
-      index === 1
-        ? `${baseName}${extension}`
-        : `${baseName}.${index}${extension}`;
 
-    // Include layout at the beginning of each chunk
-    if (index === 1) {
-      chunkOutput = layout + "\n\n" + output;
-    } else {
-      chunkOutput = output;
-    }
-    // Write the output to the determined filename and log the result.
-    try {
-      await fs.writeFile(indexedFilename, chunkOutput.trim(), "utf8");
-      console.log(`Output written to ${indexedFilename}`);
-    } catch (error) {
-      console.error(
-        `Failed to write output to ${indexedFilename}: ${error.message}`
-      );
-    }
+  if (!filename) {
+    // Generate filename based on directory name if -o is provided without a filename
+    filename = generateOutputFilename(argv["path-name"]);
+  }
+
+  // Determine the full filename for the output, appending the chunk index if needed.
+  const extension = path.extname(filename);
+  const baseName = path.basename(filename, extension);
+  const indexedFilename =
+    index === 1
+      ? `${baseName}${extension}`
+      : `${baseName}.${index}${extension}`;
+
+  // Include layout at the beginning of each chunk
+  let chunkOutput;
+  if (index === 1) {
+    chunkOutput = layout + "\n\n" + output;
+  } else {
+    chunkOutput = output;
+  }
+
+  // Check if the LLM_PREPARE_OUTPUT_DIR environment variable is set
+  const outputDir = process.env.LLM_PREPARE_OUTPUT_DIR;
+  let fullOutputPath;
+
+  if (outputDir) {
+    // Create the output directory if it does not exist
+    await fs.ensureDir(outputDir);
+    fullOutputPath = path.join(outputDir, indexedFilename);
+  } else {
+    fullOutputPath = indexedFilename;
+  }
+
+  // Write the output to the determined filename and log the result.
+  try {
+    await fs.writeFile(fullOutputPath, chunkOutput.trim(), "utf8");
+    console.log(`Output written to ${fullOutputPath}`);
+  } catch (error) {
+    console.error(
+      `Failed to write output to ${fullOutputPath}: ${error.message}`
+    );
   }
 }
 
