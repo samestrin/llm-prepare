@@ -146,7 +146,7 @@ You may optionally set the **LLM_PREPARE_OUTPUT_DIR** environment variable. If t
       --chunk-size           Maximum size (in kilobytes) of each file   [number]
   -s, --suppress-layout      Suppress layout in output (Default: false)[boolean]
       --default-ignore       Use a custom default ignore file           [string]
-      --show-default-ignore  Show default ignore file                   [string]
+      --show-default-ignore  Show default ignore file                   [boolean]
       --show-prompts         Show example prompts in your browser      [boolean]
   -v, --version              Display the version number                [boolean]
 ```

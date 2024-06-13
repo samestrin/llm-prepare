@@ -82,7 +82,7 @@ yargsBuilder
   })
   .option("show-default-ignore", {
     describe: "Show default ignore file",
-    type: "string",
+    type: "boolean",
     demandOption: false,
   })
   .option("show-prompts", {
