@@ -11,3 +11,4 @@ node_modules
 __pycache__
 venv
 built-lambda
+.npmignore
