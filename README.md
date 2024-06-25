@@ -10,7 +10,7 @@ This Node.js tool recursively scans a project directory based on provided argume
 
 ## In-Context Learning (ICL)
 
-> "While finetuning with full datasets is still a powerful option if the data vastly exceeds the context length, our results suggest that long-context ICL is an effective alternative– trading finetuning-time cost for increased inference-time compute. As the effectiveness and effiency of using very long model context lengths continues to increase, we believe long-context ICL will be a powerful tool for many tasks."
+> "While finetuning with full datasets is still a powerful option if the data vastly exceeds the context length, our results suggest that long-context ICL is an effective alternative– trading finetuning-time cost for increased inference-time compute. As the effectiveness and efficiency of using very long model context lengths continues to increase, we believe long-context ICL will be a powerful tool for many tasks."
 >
 > ###### \- [Massive prompts can outperform fine-tuning for LLMs, researchers find](https://the-decoder.com/massive-prompts-outperform-fine-tuning-for-llms-in-new-study-researchers-find/)
 
@@ -20,7 +20,7 @@ As the token size—or the amount of data that an LLM can process and generate i
 
 ## In-Context Learning (ICL) Prompts
 
-In-Context Learning (ICL) prompts are designed to guide a large language model (LLM) in performing tasks by providing relevant context within the input prompt. These prompts typically include examples, instructions, or patterns that help the model understand how to generate appropriate responses. Here are some characteristics and examples of ICL prompts:
+In-Context Learning (ICL) prompts guide a large language model (LLM) in performing tasks by providing relevant context within the input prompt. These prompts typically include examples, instructions, or patterns that help the model understand how to generate appropriate responses. Here are some characteristics and examples of ICL prompts:
 
 ### Characteristics of ICL Prompts:
 
