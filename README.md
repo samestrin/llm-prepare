@@ -6,29 +6,13 @@
 
 **llm-prepare** converts complex project directory structures and files into a single flat file or set of flat files, facilitating processing using In-Context Learning (ICL) prompts.
 
-This Node.js tool recursively scans a project directory based on provided arguments (at least a directory). Then, it constructs a simplified layout view that includes all directories and file matches. The tool then combines the layout view with the aggregated text file content of the entire project. The aggregated file content is stripped of comments and unnecessary whitespace by default. Output compression is also supported to reduce token use, and llm-prepare can handle large projects by chunking the output. Example prompts are included.
+This Node.js tool recursively scans a project directory based on provided arguments (at least a directory). It generates a simplified layout view that includes all directories and matching files. Additionally, it combines this layout view with the aggregated text content of the entire project. By default, the aggregated file content is stripped of comments and unnecessary whitespace. The tool supports output compression to reduce token use and can handle large projects by chunking the output. Example prompts are included for guidance.
 
-## In-Context Learning (ICL)
+## What is In-Context Learning (ICL)
 
-> "While finetuning with full datasets is still a powerful option if the data vastly exceeds the context length, our results suggest that long-context ICL is an effective alternative– trading finetuning-time cost for increased inference-time compute. As the effectiveness and efficiency of using very long model context lengths continues to increase, we believe long-context ICL will be a powerful tool for many tasks."
->
-> ###### \- [Massive prompts can outperform fine-tuning for LLMs, researchers find](https://the-decoder.com/massive-prompts-outperform-fine-tuning-for-llms-in-new-study-researchers-find/)
+In-Context Learning (ICL) enables a model to perform tasks by interpreting context provided within a prompt, eliminating the need for additional training or fine-tuning.
 
-In-Context Learning (ICL) allows a Large Language Model (LLM) to perform tasks by interpreting the context provided within the prompt without additional training or fine-tuning. This approach differs significantly from previous methods where models were explicitly trained on a specific task using vast datasets. Instead, ICL leverages the model's pre-trained knowledge base—a comprehensive understanding accumulated during its initial extensive training phase.
-
-As the token size—or the amount of data that an LLM can process and generate in a single instance—has dramatically increased, the value of ICL has become even more significant. This increase in token size allows LLMs to handle longer and more complex inputs and outputs, which enhances their ability to understand and generate sophisticated text.
-
-## In-Context Learning (ICL) Prompts
-
-In-Context Learning (ICL) prompts guide a large language model (LLM) in performing tasks by providing relevant context within the input prompt. These prompts typically include examples, instructions, or patterns that help the model understand how to generate appropriate responses. Here are some characteristics and examples of ICL prompts:
-
-### Characteristics of ICL Prompts:
-
-- **Contextual Examples**: Provide examples within the prompt to demonstrate the desired output format.
-- **Detailed Instructions**: Offer clear and detailed instructions on how to process the input and generate the output.
-- **Patterns and Templates**: Use patterns or templates that the model can follow to ensure consistency in the responses.
-- **Relevant Data**: Include any necessary data or background information that helps the model understand the context of the task.
-- **Incremental Guidance**: Sometimes, step-by-step guidance is included to lead the model through complex tasks.
+[Learn more about In-Context Learning (ICL)](#in-context-learning-icl)
 
 ## Features
 
@@ -162,6 +146,28 @@ You may optionally set the **LLM_PREPARE_OUTPUT_DIR** environment variable. If t
       --show-prompts         Show example prompts in your browser      [boolean]
   -v, --version              Display the version number                [boolean]
 ```
+
+## In-Context Learning (ICL)
+
+> "While finetuning with full datasets is still a powerful option if the data vastly exceeds the context length, our results suggest that long-context ICL is an effective alternative– trading finetuning-time cost for increased inference-time compute. As the effectiveness and efficiency of using very long model context lengths continues to increase, we believe long-context ICL will be a powerful tool for many tasks."
+>
+> ###### \- [Massive prompts can outperform fine-tuning for LLMs, researchers find](https://the-decoder.com/massive-prompts-outperform-fine-tuning-for-llms-in-new-study-researchers-find/)
+
+In-Context Learning (ICL) allows a Large Language Model (LLM) to perform tasks by interpreting the context provided within the prompt without additional training or fine-tuning. This approach differs significantly from previous methods where models were explicitly trained on a specific task using vast datasets. Instead, ICL leverages the model's pre-trained knowledge base—a comprehensive understanding accumulated during its initial extensive training phase.
+
+As the token size—or the amount of data that an LLM can process and generate in a single instance—has dramatically increased, the value of ICL has become even more significant. This increase in token size allows LLMs to handle longer and more complex inputs and outputs, which enhances their ability to understand and generate sophisticated text.
+
+## In-Context Learning (ICL) Prompts
+
+In-Context Learning (ICL) prompts guide a large language model (LLM) in performing tasks by providing relevant context within the input prompt. These prompts typically include examples, instructions, or patterns that help the model understand how to generate appropriate responses. Here are some characteristics and examples of ICL prompts:
+
+### Characteristics of ICL Prompts:
+
+- **Contextual Examples**: Provide examples within the prompt to demonstrate the desired output format.
+- **Detailed Instructions**: Offer clear and detailed instructions on how to process the input and generate the output.
+- **Patterns and Templates**: Use patterns or templates that the model can follow to ensure consistency in the responses.
+- **Relevant Data**: Include any necessary data or background information that helps the model understand the context of the task.
+- **Incremental Guidance**: Sometimes, step-by-step guidance is included to lead the model through complex tasks.
 
 ## Contribute
 
