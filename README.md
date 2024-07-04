@@ -93,7 +93,8 @@ To run the script, you need to provide one mandatory argument: the path to the p
 
 ### Common Usage Examples:
 
-**Basic Usage:**
+#### **Basic Usage:**
+
 This will process all files in the specified project directory, respecting any `.ignore` files, and output the consolidated content and structure to your console.
 Defaults the file pattern to "\*"
 
@@ -107,14 +108,16 @@ or
 llm-prepare --path "/path/to/project"
 ```
 
-**Specify a File Pattern:**
+#### **Specify a File Pattern:**
+
 This will process all JavaScript files in the specified project directory, respecting any `.ignore` files, and output the consolidated content and structure to your console.
 
 ```bash
 llm-prepare -p "/path/to/project" -f "*.js"
 ```
 
-**Specify an Output Filename:**
+#### **Specify an Output Filename:**
+
 This will process all files in the specified project directory, respecting any `.ignore` files, and output the consolidated content and structure to _output.txt_.
 
 ```bash
@@ -129,14 +132,16 @@ llm-prepare -p "/path/to/project" -o
 
 You may optionally set the **LLM_PREPARE_OUTPUT_DIR** environment variable. If the LLM_PREPARE_OUTPUT_DIR environment variable is set, the output files are written to that directory.
 
-**Specify Custom Ignore Rules (Through the command line):**
+#### **Specify Custom Ignore Rules (Through the command line):**
+
 If you don't want to include specific files or directories, you can specify the rules using `--custom-ignore-string`.
 
 ```bash
 llm-prepare -p "/path/to/project" -o --custom-ignore-string "*docs*,*test*"
 ```
 
-**Specify Custom Ignore Rules (Using a file):**
+#### **Specify Custom Ignore Rules (Using a file):**
+
 If you don't want to include specific files or directories, you can specify the rules using an external and `--custom-ignore-filename`. Use .gitignore file formatting.
 
 ```bash
