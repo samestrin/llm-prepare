@@ -2,7 +2,7 @@
 
 [![Star on GitHub](https://img.shields.io/github/stars/samestrin/llm-prepare?style=social)](https://github.com/samestrin/llm-prepare/stargazers) [![Fork on GitHub](https://img.shields.io/github/forks/samestrin/llm-prepare?style=social)](https://github.com/samestrin/llm-prepare/network/members) [![Watch on GitHub](https://img.shields.io/github/watchers/samestrin/llm-prepare?style=social)](https://github.com/samestrin/llm-prepare/watchers)
 
-![Version 1.0.15](https://img.shields.io/badge/Version-1.0.15-blue) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Built with Node.js](https://img.shields.io/badge/Built%20with-Node.js-green)](https://nodejs.org/)
+![Version 1.0.16](https://img.shields.io/badge/Version-1.0.16-blue) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Built with Node.js](https://img.shields.io/badge/Built%20with-Node.js-green)](https://nodejs.org/)
 
 **llm-prepare** converts complex project directory structures and files into a single flat file or set of flat files, facilitating processing using In-Context Learning (ICL) prompts.
 
@@ -104,7 +104,7 @@ llm-prepare -p "/path/to/project"
 or
 
 ```bash
-llm-prepare --path-name "/path/to/project"
+llm-prepare --path "/path/to/project"
 ```
 
 **Specify a File Pattern:**
@@ -128,6 +128,20 @@ llm-prepare -p "/path/to/project" -o
 ```
 
 You may optionally set the **LLM_PREPARE_OUTPUT_DIR** environment variable. If the LLM_PREPARE_OUTPUT_DIR environment variable is set, the output files are written to that directory.
+
+**Specify Custom Ignore Rules (Through the command line):**
+If you don't want to include specific files or directories, you can specify the rules using `--custom-ignore-string`.
+
+```bash
+llm-prepare -p "/path/to/project" -o --custom-ignore-string "*docs*,*test*"
+```
+
+**Specify Custom Ignore Rules (Using a file):**
+If you don't want to include specific files or directories, you can specify the rules using an external and `--custom-ignore-filename`. Use .gitignore file formatting.
+
+```bash
+llm-prepare -p "/path/to/project" -o --custom-ignore-filename "/path/to/.ignorefile"
+``
 
 ## Options
 
