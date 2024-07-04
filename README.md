@@ -146,11 +146,11 @@ If you don't want to include specific files or directories, you can specify the 
 
 ```bash
 llm-prepare -p "/path/to/project" -o --custom-ignore-filename "/path/to/.ignorefile"
-``
+```
 
 ## Options
 
-```
+```bash
       --help                    Show help                              [boolean]
   -p, --path                    Path to the project directory[string] [required]
   -f, --file-pattern            Pattern of files to include, e.g., '\.js$' or
