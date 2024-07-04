@@ -8,7 +8,7 @@
 
 This Node.js tool recursively scans a project directory based on provided arguments (at least a directory). It generates a simplified layout view that includes all directories and matching files. Additionally, it combines this layout view with the aggregated text content of the entire project. By default, the aggregated file content is stripped of comments and unnecessary whitespace. The tool supports output compression to reduce token use and can handle large projects by chunking the output. Example prompts are included for guidance.
 
-## What is In-Context Learning (ICL)
+### What is In-Context Learning (ICL)
 
 In-Context Learning (ICL) enables a model to perform tasks by interpreting context provided within a prompt, eliminating the need for additional training or fine-tuning.
 
