@@ -18,6 +18,7 @@ const { processFile } = require("./processFile");
  * @param {Array} lastItemStack - A stack indicating if the current directory is the last in its level.
  * @param {RegExp} filePattern - The pattern to filter files that need to be processed.
  * @param {boolean} layoutIncluded - Indicates if the layout has already been added.
+ * @param {object} argv - The command-line arguments.
  * @returns {Promise<object>} An object containing the layout for this directory and the file contents.
  */
 async function processDirectory(
@@ -28,6 +29,7 @@ async function processDirectory(
   lastItemStack,
   filePattern,
   layoutIncluded,
+  argv,
 ) {
   let layout = depth === 0 && !layoutIncluded ? `/${baseDir}\n` : "";
   let singleFileOutput = [];
@@ -55,6 +57,7 @@ async function processDirectory(
         lastItemStack.concat(i === notIgnoredEntries.length - 1),
         filePattern,
         layoutIncluded,
+        argv,
       );
 
       layout += prefix + entry + "/\n" + childResult.layout;

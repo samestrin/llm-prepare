@@ -103,4 +103,22 @@ function filterIgnoreContent(content) {
     .join("\n");
 }
 
-module.exports = { readIgnoreFiles, filterIgnoreContent };
+/**
+ * Shows the contents of the default ignore file configured in the system.
+ * This function reads the content of the specified default ignore file and prints it to the console.
+ *
+ * @returns {Promise<void>} A promise that resolves when the operation is complete.
+ * @throws {Error} If there is an error reading the default ignore file.
+ */
+async function showDefaultIgnore() {
+  const defaultIgnorePath =
+    argv["default-ignore"] || path.join(__dirname, ".defaultignore");
+  try {
+    const defaultIgnoreContent = await fs.readFile(defaultIgnorePath, "utf8");
+    console.log(defaultIgnoreContent);
+  } catch (error) {
+    handleError(`Error reading default ignore file: ${error.message}`);
+  }
+}
+
+module.exports = { readIgnoreFiles, filterIgnoreContent, showDefaultIgnore };

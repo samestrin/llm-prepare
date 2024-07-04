@@ -66,7 +66,8 @@ async function writeChunkOutput(output, index, argv, layout) {
   let filename = argv["output-filename"];
 
   if (!filename) {
-    filename = generateOutputFilename(argv["path-name"]);
+    // Generate filename based on directory name if -o is provided without a filename
+    filename = generateOutputFilename(argv["path"]);
   }
 
   const extension = path.extname(filename);

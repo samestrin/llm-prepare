@@ -3,7 +3,7 @@ const yargs = require("yargs/yargs");
 const { hideBin } = require("yargs/helpers");
 const packageJson = require("../package.json");
 const { handleError } = require("./utils/errorHandler");
-const { readIgnoreFiles } = require("./utils/ignoreUtils");
+const { readIgnoreFiles, showDefaultIgnore } = require("./utils/ignoreUtils");
 const { writeAllOutputs } = require("./utils/outputUtils");
 const { escapeRegExp, convertWildcard } = require("./utils/stringUtils");
 const { processDirectory } = require("./utils/processDirectory");
@@ -130,21 +130,11 @@ async function main(argv) {
     filePattern,
     layout,
     [],
+    argv,
   );
 
   layout = updatedLayout;
   layoutIncluded = layoutAlreadyIncluded;
 
   await writeAllOutputs(singleFileOutput, layout, layoutIncluded, argv);
-}
-
-async function showDefaultIgnore() {
-  const defaultIgnorePath =
-    argv["default-ignore"] || path.join(__dirname, ".defaultignore");
-  try {
-    const defaultIgnoreContent = await fs.readFile(defaultIgnorePath, "utf8");
-    console.log(defaultIgnoreContent);
-  } catch (error) {
-    handleError(`Error reading default ignore file: ${error.message}`);
-  }
 }

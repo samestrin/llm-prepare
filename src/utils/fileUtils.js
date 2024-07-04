@@ -10,6 +10,9 @@ const path = require("path");
  * @returns {string} The generated filename based on the directory name.
  */
 function generateOutputFilename(pathName) {
+  if (!pathName) {
+    throw new Error("Path name is required to generate output filename");
+  }
   const baseDir = path.basename(path.resolve(pathName));
   return `${baseDir}.txt`;
 }
