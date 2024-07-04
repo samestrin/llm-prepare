@@ -101,7 +101,7 @@ async function main(argv) {
   let layoutIncluded = false;
 
   if ("show-default-ignore" in argv) {
-    await showDefaultIgnore();
+    await showDefaultIgnore(argv);
     return;
   } else if ("show-prompts" in argv) {
     const open = (await import("open")).default;
@@ -116,7 +116,6 @@ async function main(argv) {
   );
 
   const ig = await readIgnoreFiles(argv["path"], argv["default-ignore"], argv);
-
   const {
     layout: updatedLayout,
     singleFileOutput,

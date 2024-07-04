@@ -9,8 +9,8 @@ function handleError(error) {
   if (!process.env.ENV && false) {
     console.error(`Unhandled error: ${error.message}`);
   } else {
-    console.log(`${error.message}`);
-    console.log(`  at ${error.stack}`);
+    console.error(`${error.message}`);
+    console.error(`  at ${error.stack}`);
   }
 }
 

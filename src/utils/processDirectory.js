@@ -34,19 +34,23 @@ async function processDirectory(
   let layout = depth === 0 && !layoutIncluded ? `/${baseDir}\n` : "";
   let singleFileOutput = [];
   const entries = await fs.readdir(dir);
-  const notIgnoredEntries = ig.filter(entries).sort();
 
-  for (let i = 0; i < notIgnoredEntries.length; i++) {
-    const entry = notIgnoredEntries[i];
+  // Map entries to their relative paths for filtering
+  const relativePaths = entries.map((entry) =>
+    path.relative(baseDir, path.join(dir, entry)),
+  );
+
+  // Filter entries using ignore rules
+  const filteredEntries = entries
+    .filter((entry, index) => !ig.ignores(relativePaths[index]))
+    .sort();
+
+  for (let i = 0; i < filteredEntries.length; i++) {
+    const entry = filteredEntries[i];
     const entryPath = path.join(dir, entry);
     const stats = await fs.stat(entryPath);
 
-    let prefix = computePrefix(
-      depth,
-      lastItemStack,
-      i,
-      notIgnoredEntries.length,
-    );
+    let prefix = computePrefix(depth, lastItemStack, i, filteredEntries.length);
 
     if (stats.isDirectory()) {
       const childResult = await processDirectory(
@@ -54,7 +58,7 @@ async function processDirectory(
         baseDir,
         ig,
         depth + 1,
-        lastItemStack.concat(i === notIgnoredEntries.length - 1),
+        lastItemStack.concat(i === filteredEntries.length - 1),
         filePattern,
         layoutIncluded,
         argv,

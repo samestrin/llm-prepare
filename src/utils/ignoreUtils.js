@@ -1,3 +1,5 @@
+// utils/ignoreUtils.js
+
 const ignore = require("ignore");
 const fs = require("fs-extra");
 const path = require("path");
@@ -17,8 +19,8 @@ async function readIgnoreFiles(dir, defaultIgnorePath = false, argv) {
   const ig = ignore();
 
   if (!defaultIgnorePath)
-    defaultIgnorePath = path.join(__dirname, ".defaultignore");
-
+    defaultIgnorePath = path.join(__dirname, "../../.defaultignore");
+  console.log(defaultIgnorePath);
   // Attempt to load .defaultignore with specific error handling
   try {
     if (await fileExists(defaultIgnorePath)) {
@@ -86,6 +88,9 @@ async function readIgnoreFiles(dir, defaultIgnorePath = false, argv) {
     }
   }
 
+  // Debugging: Log the ignore patterns
+  //console.log("Ignore patterns loaded:", ig._rules);
+
   return ig;
 }
 
@@ -107,10 +112,11 @@ function filterIgnoreContent(content) {
  * Shows the contents of the default ignore file configured in the system.
  * This function reads the content of the specified default ignore file and prints it to the console.
  *
+ * @param {object} argv - Command-line arguments that might affect ignore rules.
  * @returns {Promise<void>} A promise that resolves when the operation is complete.
  * @throws {Error} If there is an error reading the default ignore file.
  */
-async function showDefaultIgnore() {
+async function showDefaultIgnore(argv) {
   const defaultIgnorePath =
     argv["default-ignore"] || path.join(__dirname, ".defaultignore");
   try {
