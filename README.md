@@ -2,7 +2,7 @@
 
 [![Star on GitHub](https://img.shields.io/github/stars/samestrin/llm-prepare?style=social)](https://github.com/samestrin/llm-prepare/stargazers) [![Fork on GitHub](https://img.shields.io/github/forks/samestrin/llm-prepare?style=social)](https://github.com/samestrin/llm-prepare/network/members) [![Watch on GitHub](https://img.shields.io/github/watchers/samestrin/llm-prepare?style=social)](https://github.com/samestrin/llm-prepare/watchers)
 
-![Version 1.0.14](https://img.shields.io/badge/Version-1.0.14-blue) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Built with Node.js](https://img.shields.io/badge/Built%20with-Node.js-green)](https://nodejs.org/)
+![Version 1.0.15](https://img.shields.io/badge/Version-1.0.15-blue) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Built with Node.js](https://img.shields.io/badge/Built%20with-Node.js-green)](https://nodejs.org/)
 
 **llm-prepare** converts complex project directory structures and files into a single flat file or set of flat files, facilitating processing using In-Context Learning (ICL) prompts.
 
@@ -132,19 +132,25 @@ You may optionally set the **LLM_PREPARE_OUTPUT_DIR** environment variable. If t
 ## Options
 
 ```
-      --help                 Show help                                 [boolean]
-  -p, --path-name            Path to the project directory   [string] [required]
-  -f, --file-pattern         Pattern of files to include, e.g., '\.js$' or '*'
-                             for all files               [string] [default: "*"]
-  -o, --output-filename      Output filename                            [string]
-  -i, --include-comments     Include comments? (Default: false)        [boolean]
-  -c, --compress             Compress? (Default: false)                [boolean]
-      --chunk-size           Maximum size (in kilobytes) of each file   [number]
-  -s, --suppress-layout      Suppress layout in output (Default: false)[boolean]
-      --default-ignore       Use a custom default ignore file           [string]
-      --show-default-ignore  Show default ignore file                   [boolean]
-      --show-prompts         Show example prompts in your browser      [boolean]
-  -v, --version              Display the version number                [boolean]
+      --help                    Show help                              [boolean]
+  -p, --path                    Path to the project directory[string] [required]
+  -f, --file-pattern            Pattern of files to include, e.g., '\.js$' or
+                                '*' for all files        [string] [default: "*"]
+  -o, --output-filename         Output filename                         [string]
+  -i, --include-comments        Include comments? (Default: false)     [boolean]
+  -c, --compress                Compress? (Default: false)             [boolean]
+      --chunk-size              Maximum size (in kilobytes) of each file[number]
+  -s, --suppress-layout         Suppress layout in output (Default: false)
+                                                                       [boolean]
+      --default-ignore          Use a custom default ignore file        [string]
+      --ignore-gitignore        Ignore .gitignore file in the root of the
+                                project directory                      [boolean]
+      --show-default-ignore     Show default ignore file               [boolean]
+      --show-prompts            Show example prompts in your browser   [boolean]
+      --custom-ignore-string    Comma-separated list of ignore patterns [string]
+      --custom-ignore-filename  Path to a file containing ignore patterns
+                                                                        [string]
+  -v, --version                 Display the version number             [boolean]
 ```
 
 ## In-Context Learning (ICL)

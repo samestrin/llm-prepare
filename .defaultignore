@@ -12,3 +12,4 @@ __pycache__
 venv
 built-lambda
 .npmignore
+*cache/*
