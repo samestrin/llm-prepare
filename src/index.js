@@ -128,7 +128,6 @@ async function main(argv) {
     [],
     filePattern,
     layout,
-    [],
     argv,
   );
 
