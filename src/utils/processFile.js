@@ -15,34 +15,32 @@ const path = require("path");
 async function processFile(content, filePath, argv) {
   try {
     if (content.trim().length === 0) {
-      return ""; // Skip empty files
+      return ""; // Return empty content for empty files
     }
-
     if (!argv["include-comments"]) {
-      // Regular expression for removing block comments
-      content = content.replace(/\/\*(?!.*https?:\/\/)[\s\S]*?\*\//g, "");
-      // Regular expression for removing single-line comments
-      content = content.replace(/\/\/(?!.*https?:\/\/).*$/gm, "");
+      content = content.replace(/\/\*(?!.*https?:\/\/)[\s\S]*?\*\//g, ""); // Strip block comments
+      content = content.replace(/\/\/(?!.*https?:\/\/).*$/gm, ""); // Strip line comments
     }
-
-    content = content.replace(/[ \t]+/g, " "); // Normalize spaces and tabs
-
+    content = content.replace(/[ \t]+/g, " "); // Collapse whitespace
     if (argv["compress"]) {
-      content = content.replace(/\s+/g, " ").trim(); // Compress whitespace
+      content = content.replace(/\s+/g, " ").trim(); // Compress output
     } else {
-      content = content.replace(/(?:\r\n|\r|\n){2,}/g, "\n"); // Condense newlines
+      content = content.replace(/(?:\r\n|\r|\n){2,}/g, "\n"); // Normalize line breaks
     }
 
     return `
 /** File: /${path.relative(
       process.cwd(),
-      filePath,
+      filePath
     )} ***************************************/
 ${content}
 `;
   } catch (error) {
     // Handle errors while processing the file
-    console.error(`Error processing file ${filePath}: ${error.message}`);
+    console.error(
+      `Error processing file ${filePath}: ${error.message}`,
+      error.stack
+    );
     return ""; // Return an empty string in case of errors
   }
 }

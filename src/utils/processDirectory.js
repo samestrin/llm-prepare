@@ -1,25 +1,20 @@
-// utils/processDirectory.js
-
 const fs = require("fs-extra");
 const path = require("path");
 const istextorbinary = require("istextorbinary");
 const { processFile } = require("./processFile");
 
 /**
- * Processes the directory and its subdirectories recursively to build a flat file
- * output and a directory layout. It filters entries based on ignore rules and constructs
- * an ASCII layout of the directory structure. It returns an object containing the layout for
- * this directory and the file contents.
- *
- * @param {string} dir - The current directory to process.
- * @param {string} baseDir - The base directory for relative path calculations.
- * @param {object} ig - The ignore manager object with configured ignore rules.
- * @param {number} depth - The current depth in the directory structure.
- * @param {Array} lastItemStack - A stack indicating if the current directory is the last in its level.
- * @param {RegExp} filePattern - The pattern to filter files that need to be processed.
- * @param {boolean} layoutIncluded - Indicates if the layout has already been added.
- * @param {object} argv - The command-line arguments.
- * @returns {Promise<object>} An object containing the layout for this directory and the file contents.
+ * Recursively processes a directory and its contents.
+ * @param {string} dir - The directory to process.
+ * @param {string} baseDir - The base directory for relative paths.
+ * @param {object} ig - Ignore rules object.
+ * @param {number} depth - Current depth in the directory tree.
+ * @param {array} lastItemStack - Stack of last items to properly format the layout.
+ * @param {RegExp} filePattern - Regex pattern to match files.
+ * @param {string} layout - Current layout string being built.
+ * @param {object} argv - Command-line arguments.
+ * @param {array} includePaths - Array of paths to include in processing.
+ * @returns {object} - Updated layout, file output, and layout included flag.
  */
 async function processDirectory(
   dir,
@@ -28,29 +23,32 @@ async function processDirectory(
   depth,
   lastItemStack,
   filePattern,
-  layoutIncluded,
+  layout,
   argv,
+  includePaths
 ) {
-  let layout = depth === 0 && !layoutIncluded ? `/${baseDir}\n` : "";
   let singleFileOutput = [];
-  const entries = await fs.readdir(dir);
+  let layoutIncluded = false;
 
-  // Map entries to their relative paths for filtering
+  const entries = await fs.readdir(dir);
   const relativePaths = entries.map((entry) =>
-    path.relative(baseDir, path.join(dir, entry)),
+    path.relative(baseDir, path.join(dir, entry))
   );
 
-  // Filter entries using ignore rules
+  // Filter entries by ignore rules and include paths
   const filteredEntries = entries
-    .filter((entry, index) => !ig.ignores(relativePaths[index]))
+    .filter(
+      (entry, index) =>
+        !ig.ignores(relativePaths[index]) &&
+        (includePaths.length === 0 ||
+          isIncludedPath(relativePaths[index], includePaths, baseDir))
+    )
     .sort();
 
   for (let i = 0; i < filteredEntries.length; i++) {
     const entry = filteredEntries[i];
     const entryPath = path.join(dir, entry);
     const stats = await fs.stat(entryPath);
-
-    let prefix = computePrefix(depth, lastItemStack, i, filteredEntries.length);
 
     if (stats.isDirectory()) {
       const childResult = await processDirectory(
@@ -60,40 +58,38 @@ async function processDirectory(
         depth + 1,
         lastItemStack.concat(i === filteredEntries.length - 1),
         filePattern,
-        layoutIncluded,
+        layout,
         argv,
+        includePaths
       );
-
-      layout += prefix + entry + "/\n" + childResult.layout;
+      layout += childResult.layout;
       singleFileOutput = singleFileOutput.concat(childResult.singleFileOutput);
       layoutIncluded = childResult.layoutIncluded;
     } else if (stats.isFile() && filePattern.test(entry)) {
-      let fileContent = await fs.readFile(entryPath, "utf-8");
-      if (!istextorbinary.isBinary(entryPath, fileContent)) {
-        const content = await processFile(fileContent, entryPath, argv);
-
+      const content = await fs.readFile(entryPath, "utf8");
+      if (!istextorbinary.isBinary(entryPath, content)) {
+        const processedContent = await processFile(content, entryPath, argv);
         singleFileOutput.push({
           path: path.relative(baseDir, entryPath),
-          content: content,
+          content: processedContent,
         });
-        layout += prefix + entry + "\n";
+        layout +=
+          computePrefix(depth, lastItemStack, i, filteredEntries.length) +
+          entry +
+          "\n";
       }
     }
   }
-
   return { layout, singleFileOutput, layoutIncluded };
 }
 
 /**
- * Computes the prefix for directory entries in the layout based on the current depth
- * and the last item status at each depth. It generates a prefix string that represents
- * the hierarchical structure of directories.
- *
- * @param {number} depth - The current depth in the directory tree.
- * @param {Array} lastItemStack - Tracks if the current item is the last at each depth.
- * @param {number} currentIndex - The index of the current item in the entries array.
- * @param {number} totalEntries - The total number of entries in the directory.
- * @returns {string} The computed prefix for the directory entry.
+ * Computes the prefix for the current directory or file, depending on its depth and position.
+ * @param {number} depth - Current depth in the directory structure.
+ * @param {array} lastItemStack - Stack of last items in each directory level.
+ * @param {number} currentIndex - Index of the current item in the directory.
+ * @param {number} totalEntries - Total number of entries in the current directory.
+ * @returns {string} Prefix string for layout visualization.
  */
 function computePrefix(depth, lastItemStack, currentIndex, totalEntries) {
   let prefix = "";
@@ -102,6 +98,34 @@ function computePrefix(depth, lastItemStack, currentIndex, totalEntries) {
   }
   prefix += currentIndex === totalEntries - 1 ? "└── " : "├── ";
   return prefix;
+}
+
+/**
+ * Checks if a given file path is within the specified include paths.
+ * @param {string} filePath - File path to check.
+ * @param {array} includePaths - Array of paths to include in processing.
+ * @param {string} baseDir - The base directory to resolve relative paths.
+ * @returns {boolean} True if the file is within the include paths, otherwise false.
+ */
+function isIncludedPath(filePath, includePaths, baseDir) {
+  // Convert filePath to an absolute path
+  const absoluteFilePath = path.resolve(baseDir, filePath);
+  console.log(`Checking if ${absoluteFilePath} is included in `, includePaths);
+
+  // Normalize paths for comparison
+  const normalizedFilePath = path.normalize(absoluteFilePath);
+
+  return includePaths.some((includePath) => {
+    const normalizedIncludePath = path.normalize(includePath);
+
+    // If the include path is a directory, check if the filePath starts with it
+    if (fs.statSync(includePath).isDirectory()) {
+      return normalizedFilePath.startsWith(normalizedIncludePath);
+    }
+
+    // If the include path is a file, check for exact match
+    return normalizedFilePath === normalizedIncludePath;
+  });
 }
 
 module.exports = { processDirectory };

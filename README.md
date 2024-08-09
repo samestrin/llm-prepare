@@ -2,7 +2,7 @@
 
 [![Star on GitHub](https://img.shields.io/github/stars/samestrin/llm-prepare?style=social)](https://github.com/samestrin/llm-prepare/stargazers) [![Fork on GitHub](https://img.shields.io/github/forks/samestrin/llm-prepare?style=social)](https://github.com/samestrin/llm-prepare/network/members) [![Watch on GitHub](https://img.shields.io/github/watchers/samestrin/llm-prepare?style=social)](https://github.com/samestrin/llm-prepare/watchers)
 
-![Version 1.0.17](https://img.shields.io/badge/Version-1.0.17-blue) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Built with Node.js](https://img.shields.io/badge/Built%20with-Node.js-green)](https://nodejs.org/)
+![Version 1.0.18](https://img.shields.io/badge/Version-1.0.18-blue) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Built with Node.js](https://img.shields.io/badge/Built%20with-Node.js-green)](https://nodejs.org/)
 
 **llm-prepare** converts complex project directory structures and files into a single flat file or set of flat files, facilitating processing using In-Context Learning (ICL) prompts.
 
@@ -13,6 +13,10 @@ This Node.js tool recursively scans a project directory based on provided argume
 In-Context Learning (ICL) enables a model to perform tasks by interpreting context provided within a prompt, eliminating the need for additional training or fine-tuning.
 
 [Learn more about In-Context Learning (ICL)](#in-context-learning-icl)
+
+## v0.1.8
+
+- **Configurable via JSON**: Use the `--config` option to load a JSON configuration file containing pre-defined arguments and paths to include.
 
 ## Features
 
@@ -148,6 +152,36 @@ If you don't want to include specific files or directories, you can specify the 
 llm-prepare -p "/path/to/project" -o --custom-ignore-filename "/path/to/.ignorefile"
 ```
 
+#### **Specify Custom Ignore Rules (Using a file):**
+
+If you don't want to include specific files or directories, you can specify the rules using an external and `--custom-ignore-filename`. Use .gitignore file formatting.
+
+```bash
+llm-prepare -p "/path/to/project" -o --custom-ignore-filename "/path/to/.ignorefile"
+```
+
+#### **Using a Configuration File:**
+
+You can use a JSON configuration file to predefine the arguments and paths to include in the processing.
+
+Example `config.json` file:
+
+```json
+{
+  "args": {
+    "output-filename": "output.txt",
+    "compress": true
+  },
+  "include": ["./src/", "./lib/"]
+}
+```
+
+To run the script with a config file:
+
+```bash
+llm-prepare -c "config.json"
+```
+
 ## Options
 
 ```bash
@@ -169,6 +203,7 @@ llm-prepare -p "/path/to/project" -o --custom-ignore-filename "/path/to/.ignoref
       --custom-ignore-string    Comma-separated list of ignore patterns [string]
       --custom-ignore-filename  Path to a file containing ignore patterns
                                                                         [string]
+      --config                  Path to the config file                 [string]
   -v, --version                 Display the version number             [boolean]
 ```
 
