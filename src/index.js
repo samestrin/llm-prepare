@@ -1,13 +1,12 @@
-const fs = require("fs-extra");
 const yargs = require("yargs/yargs");
 const { hideBin } = require("yargs/helpers");
 const packageJson = require("../package.json");
 const { handleError } = require("./utils/errorHandler");
-const { readIgnoreFiles, showDefaultIgnore } = require("./utils/ignoreUtils");
-const { writeAllOutputs } = require("./utils/outputUtils");
-const { escapeRegExp, convertWildcard } = require("./utils/stringUtils");
-const { processDirectory } = require("./utils/processDirectory");
-
+const { showDefaultIgnore } = require("./utils/ignoreUtils");
+const { loadConfigFile, mergeArguments } = require("./utils/configUtils");
+const { processPath } = require("./utils/pathUtils"); // New import for handling paths
+const { writeAllOutputs } = require("./utils/outputUtils"); // Ensure writeAllOutputs is properly imported
+const { convertWildcard, escapeRegExp } = require("./utils/stringUtils");
 const yargsBuilder = yargs(hideBin(process.argv));
 
 if (
@@ -15,20 +14,26 @@ if (
   !process.argv.includes("--show-prompts")
 ) {
   yargsBuilder
+    .option("config", {
+      describe: "Path to the config file",
+      type: "string",
+      demandOption: false,
+    })
     .option("path", {
       alias: "p",
       describe: "Path to the project directory",
       type: "string",
-      demandOption: true,
+      demandOption: false,
     })
     .option("file-pattern", {
       alias: "f",
       describe:
         "Pattern of files to include, e.g., '\\.js$' or '*' for all files",
       type: "string",
-      default: "*", // Set default value to "*"
+      default: "*",
     });
 }
+
 yargsBuilder
   .option("output-filename", {
     alias: "o",
@@ -43,7 +48,6 @@ yargsBuilder
     alias: "i",
   })
   .option("compress", {
-    alias: "c",
     describe: "Compress? (Default: false)",
     type: "boolean",
     demandOption: false,
@@ -94,11 +98,36 @@ yargsBuilder
 
 const argv = yargsBuilder.argv;
 
-main(argv).catch(handleError);
-
 async function main(argv) {
+  let config = {};
+
+  // Load and merge config file if --config option is provided
+  if (argv.config) {
+    config = await loadConfigFile(argv.config);
+    argv = mergeArguments(argv, config.args);
+  }
+
+  // make sure compress is included
+  if (!argv.compress && argv.c) {
+    argv.compress = argv.c;
+  }
+
+  // Check if path is provided or fallback to include array
+  let pathsToProcess = [];
+  if (argv.path) {
+    pathsToProcess.push(argv.path);
+  } else if (config.include && config.include.length > 0) {
+    pathsToProcess = config.include;
+  } else {
+    handleError(
+      new Error("Either a path or an include array must be provided.")
+    );
+    return;
+  }
+
   let layout = "";
   let layoutIncluded = false;
+  let accumulatedOutput = []; // New array to accumulate all outputs
 
   if ("show-default-ignore" in argv) {
     await showDefaultIgnore(argv);
@@ -106,33 +135,29 @@ async function main(argv) {
   } else if ("show-prompts" in argv) {
     const open = (await import("open")).default;
     await open(
-      "https://github.com/samestrin/llm-prepare/blob/main/example-prompts/README.md",
+      "https://github.com/samestrin/llm-prepare/tree/main/example-prompts"
     );
     return;
   }
 
   const filePattern = new RegExp(
-    convertWildcard(escapeRegExp(argv["file-pattern"])),
+    convertWildcard(escapeRegExp(argv["file-pattern"]))
   );
 
-  const ig = await readIgnoreFiles(argv["path"], argv["default-ignore"], argv);
-  const {
-    layout: updatedLayout,
-    singleFileOutput,
-    layoutIncluded: layoutAlreadyIncluded,
-  } = await processDirectory(
-    argv["path"],
-    argv["path"],
-    ig,
-    0,
-    [],
-    filePattern,
-    layout,
-    argv,
-  );
+  for (const pathToProcess of pathsToProcess) {
+    await processPath(
+      pathToProcess,
+      argv,
+      layout,
+      layoutIncluded,
+      config.include || [],
+      filePattern,
+      accumulatedOutput
+    );
+  }
 
-  layout = updatedLayout;
-  layoutIncluded = layoutAlreadyIncluded;
-
-  await writeAllOutputs(singleFileOutput, layout, layoutIncluded, argv);
+  // After all paths are processed, write the accumulated output
+  await writeAllOutputs(accumulatedOutput, layout, layoutIncluded, argv);
 }
+
+main(argv).catch(handleError);

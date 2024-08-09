@@ -20,7 +20,7 @@ async function readIgnoreFiles(dir, defaultIgnorePath = false, argv) {
 
   if (!defaultIgnorePath)
     defaultIgnorePath = path.join(__dirname, "../../.defaultignore");
-  console.log(defaultIgnorePath);
+
   // Attempt to load .defaultignore with specific error handling
   try {
     if (await fileExists(defaultIgnorePath)) {
@@ -29,7 +29,7 @@ async function readIgnoreFiles(dir, defaultIgnorePath = false, argv) {
     }
   } catch (error) {
     handleError(
-      `Error reading or processing .defaultignore file: ${error.message}`,
+      `Error reading or processing .defaultignore file: ${error.message}`
     );
   }
 
@@ -43,7 +43,7 @@ async function readIgnoreFiles(dir, defaultIgnorePath = false, argv) {
       }
     } catch (error) {
       handleError(
-        `Error reading or processing .gitignore file: ${error.message}`,
+        `Error reading or processing .gitignore file: ${error.message}`
       );
     }
   }
@@ -52,17 +52,17 @@ async function readIgnoreFiles(dir, defaultIgnorePath = false, argv) {
     const files = await fs.readdir(dir);
     // Filter out .gitignore from the list of files to prevent double processing
     const ignoreFiles = files.filter(
-      (file) => file.match(/\..*ignore/) && file !== ".gitignore",
+      (file) => file.match(/\..*ignore/) && file !== ".gitignore"
     );
     await Promise.all(
       ignoreFiles.map(async (file) => {
         const content = await fs.readFile(path.join(dir, file), "utf8");
         ig.add(filterIgnoreContent(content));
-      }),
+      })
     );
   } catch (error) {
     handleError(
-      `Failed to read ignore files in directory ${dir}: ${error.message}`,
+      `Failed to read ignore files in directory ${dir}: ${error.message}`
     );
   }
 
@@ -78,12 +78,12 @@ async function readIgnoreFiles(dir, defaultIgnorePath = false, argv) {
     try {
       const customIgnoreContent = await fs.readFile(
         argv["custom-ignore-filename"],
-        "utf8",
+        "utf8"
       );
       ig.add(filterIgnoreContent(customIgnoreContent));
     } catch (error) {
       handleError(
-        `Failed to read custom ignore file ${argv["custom-ignore-filename"]}: ${error.message}`,
+        `Failed to read custom ignore file ${argv["custom-ignore-filename"]}: ${error.message}`
       );
     }
   }
@@ -121,7 +121,6 @@ async function showDefaultIgnore(argv) {
     argv["default-ignore"] || path.join(__dirname, ".defaultignore");
   try {
     const defaultIgnoreContent = await fs.readFile(defaultIgnorePath, "utf8");
-    console.log(defaultIgnoreContent);
   } catch (error) {
     handleError(`Error reading default ignore file: ${error.message}`);
   }

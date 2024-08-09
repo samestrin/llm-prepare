@@ -14,6 +14,10 @@ In-Context Learning (ICL) enables a model to perform tasks by interpreting conte
 
 [Learn more about In-Context Learning (ICL)](#in-context-learning-icl)
 
+## v0.1.8
+
+- **Configurable via JSON**: Use the `--config` option to load a JSON configuration file containing pre-defined arguments and paths to include.
+
 ## Features
 
 - **Layout View**: Provides an ASCII layout view of your project.
@@ -148,6 +152,36 @@ If you don't want to include specific files or directories, you can specify the 
 llm-prepare -p "/path/to/project" -o --custom-ignore-filename "/path/to/.ignorefile"
 ```
 
+#### **Specify Custom Ignore Rules (Using a file):**
+
+If you don't want to include specific files or directories, you can specify the rules using an external and `--custom-ignore-filename`. Use .gitignore file formatting.
+
+```bash
+llm-prepare -p "/path/to/project" -o --custom-ignore-filename "/path/to/.ignorefile"
+```
+
+#### **Using a Configuration File:**
+
+You can use a JSON configuration file to predefine the arguments and paths to include in the processing.
+
+Example `config.json` file:
+
+```json
+{
+  "args": {
+    "output-filename": "output.txt",
+    "compress": true
+  },
+  "include": ["./src/", "./lib/"]
+}
+```
+
+To run the script with a config file:
+
+```bash
+llm-prepare -c "config.json"
+```
+
 ## Options
 
 ```bash
@@ -169,6 +203,7 @@ llm-prepare -p "/path/to/project" -o --custom-ignore-filename "/path/to/.ignoref
       --custom-ignore-string    Comma-separated list of ignore patterns [string]
       --custom-ignore-filename  Path to a file containing ignore patterns
                                                                         [string]
+      --config                  Path to the config file                 [string]
   -v, --version                 Display the version number             [boolean]
 ```
 
