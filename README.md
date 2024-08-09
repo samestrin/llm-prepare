@@ -14,7 +14,7 @@ In-Context Learning (ICL) enables a model to perform tasks by interpreting conte
 
 [Learn more about In-Context Learning (ICL)](#in-context-learning-icl)
 
-## v0.1.8
+## v1.0.18
 
 - **Configurable via JSON**: Use the `--config` option to load a JSON configuration file containing pre-defined arguments and paths to include.
 
