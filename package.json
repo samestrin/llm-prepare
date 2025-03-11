@@ -15,7 +15,7 @@
 	"main": "./llm-prepare.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"llm-prepare": "node ./llm-prepage.js "
+		"llm-prepare": "node ./llm-prepare.js "
 	},
 	"keywords": [],
 	"author": "",
