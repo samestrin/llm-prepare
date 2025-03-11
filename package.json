@@ -18,8 +18,6 @@
 		"llm-prepare": "node ./llm-prepare.js "
 	},
 	"keywords": [],
-	"author": "",
-	"license": "MIT",
 	"dependencies": {
 		"fs-extra": "^11.2.0",
 		"ignore": "^5.3.1",
