@@ -41,6 +41,12 @@ yargsBuilder
     type: "string",
     demandOption: false,
   })
+  // Add new comment-style option
+  .option("comment-style", {
+    describe: "Override the comment style for file headers (e.g., 'python', 'java', 'html')",
+    type: "string",
+    demandOption: false,
+  })
   .option("include-comments", {
     describe: "Include comments? (Default: false)",
     type: "boolean",
