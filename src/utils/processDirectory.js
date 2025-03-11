@@ -110,7 +110,6 @@ function computePrefix(depth, lastItemStack, currentIndex, totalEntries) {
 function isIncludedPath(filePath, includePaths, baseDir) {
   // Convert filePath to an absolute path
   const absoluteFilePath = path.resolve(baseDir, filePath);
-  console.log(`Checking if ${absoluteFilePath} is included in `, includePaths);
 
   // Normalize paths for comparison
   const normalizedFilePath = path.normalize(absoluteFilePath);
