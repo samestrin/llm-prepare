@@ -196,6 +196,8 @@ llm-prepare -c "config.json"
   -o, --output-filename         Output filename                         [string]
   -i, --include-comments        Include comments? (Default: false)     [boolean]
   -c, --compress                Compress? (Default: false)             [boolean]
+      --comment-style           Override the comment style for file headers
+                                (e.g., 'python', 'java', 'html')        [string]  
       --chunk-size              Maximum size (in kilobytes) of each file[number]
   -s, --suppress-layout         Suppress layout in output (Default: false)
                                                                        [boolean]
