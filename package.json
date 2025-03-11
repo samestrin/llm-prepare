@@ -1,33 +1,32 @@
 {
-  "name": "llm-prepare",
-  "version": "1.0.18",
-  "description": "llm-prepare converts complex project directory structures and files into a single flat file or a set of flat files, facilitating processing using In-Context Learning (ICL) prompts.",
-  "author": "Sam Estrin",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/samestrin/llm-prepare/issues"
-  },
-  "homepage": "https://github.com/samestrin/llm-prepare#readme",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/samestrin/llm-prepare.git"
-  },
-  "main": "./llm-prepare.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "llm-prepare": "node ./llm-prepage.js "
-  },
-  "keywords": [],
-  "author": "",
-  "license": "MIT",
-  "dependencies": {
-    "fs-extra": "^11.2.0",
-    "ignore": "^7.0.0",
-    "istextorbinary": "^9.5.0",
-    "open": "^10.1.0",
-    "yargs": "^17.7.2"
-  },
-  "bin": {
-    "llm-prepare": "./llm-prepare.js"
-  }
+
+	"name": "llm-prepare",
+	"version": "1.0.19",
+	"description": "llm-prepare converts complex project directory structures and files into a single flat file or a set of flat files, facilitating processing using In-Context Learning (ICL) prompts.",
+	"author": "Sam Estrin",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/samestrin/llm-prepare/issues"
+	},
+	"homepage": "https://github.com/samestrin/llm-prepare#readme",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/samestrin/llm-prepare.git"
+	},
+	"main": "./llm-prepare.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"llm-prepare": "node ./llm-prepare.js "
+	},
+	"keywords": [],
+	"dependencies": {
+		"fs-extra": "^11.2.0",
+		"ignore": "^5.3.1",
+		"istextorbinary": "^9.5.0",
+		"open": "^10.1.0",
+		"yargs": "^17.7.2"
+	},
+	"bin": {
+		"llm-prepare": "./llm-prepare.js"
+	}
 }
