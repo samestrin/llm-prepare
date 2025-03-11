@@ -1,7 +1,11 @@
 {
 
 	"name": "llm-prepare",
+<<<<<<< Updated upstream
 	"version": "1.0.19",
+=======
+	"version": "1.0.21",
+>>>>>>> Stashed changes
 	"description": "llm-prepare converts complex project directory structures and files into a single flat file or a set of flat files, facilitating processing using In-Context Learning (ICL) prompts.",
 	"author": "Sam Estrin",
 	"license": "MIT",
