@@ -4,6 +4,7 @@
 
 ![Version 1.0.21](https://img.shields.io/badge/Version-1.0.21-blue) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Built with Node.js](https://img.shields.io/badge/Built%20with-Node.js-green)](https://nodejs.org/)
 
+
 **llm-prepare** converts complex project directory structures and files into a single flat file or set of flat files, facilitating processing using In-Context Learning (ICL) prompts.
 
 This Node.js tool recursively scans a project directory based on provided arguments (at least a directory). It generates a simplified layout view that includes all directories and matching files. Additionally, it combines this layout view with the aggregated text content of the entire project. By default, the aggregated file content is stripped of comments and unnecessary whitespace. The tool supports output compression to reduce token use and can handle large projects by chunking the output. Example prompts are included for guidance.
