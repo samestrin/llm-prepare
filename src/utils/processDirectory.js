@@ -66,13 +66,20 @@ async function processDirectory(
       singleFileOutput = singleFileOutput.concat(childResult.singleFileOutput);
       layoutIncluded = childResult.layoutIncluded;
     } else if (stats.isFile() && filePattern.test(entry)) {
+      // Add file size check (default max size: 10MB)
+      const MAX_FILE_SIZE = 1024 * 1024 * 10; // 10MB in bytes
+      if (stats.size > MAX_FILE_SIZE) {
+        console.warn(`Warning: Skipping ${entryPath} - File size (${(stats.size / 1024 / 1024).toFixed(2)}MB) exceeds maximum allowed size (10MB)`);
+        continue;
+      }
+
       const content = await fs.readFile(entryPath, "utf8");
       if (!istextorbinary.isBinary(entryPath, content)) {
         const processedContent = await processFile(content, entryPath, argv);
         singleFileOutput.push({
           path: path.relative(baseDir, entryPath),
           content: processedContent,
-        });
+        }); 
         layout +=
           computePrefix(depth, lastItemStack, i, filteredEntries.length) +
           entry +
