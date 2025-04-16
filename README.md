@@ -2,7 +2,7 @@
 
 [![Star on GitHub](https://img.shields.io/github/stars/samestrin/llm-prepare?style=social)](https://github.com/samestrin/llm-prepare/stargazers) [![Fork on GitHub](https://img.shields.io/github/forks/samestrin/llm-prepare?style=social)](https://github.com/samestrin/llm-prepare/network/members) [![Watch on GitHub](https://img.shields.io/github/watchers/samestrin/llm-prepare?style=social)](https://github.com/samestrin/llm-prepare/watchers)
 
-![Version 1.0.21](https://img.shields.io/badge/Version-1.0.21-blue) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Built with Node.js](https://img.shields.io/badge/Built%20with-Node.js-green)](https://nodejs.org/)
+![Version 1.0.22](https://img.shields.io/badge/Version-1.0.22-blue) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Built with Node.js](https://img.shields.io/badge/Built%20with-Node.js-green)](https://nodejs.org/)
 
 
 **llm-prepare** converts complex project directory structures and files into a single flat file or set of flat files, facilitating processing using In-Context Learning (ICL) prompts.
@@ -14,6 +14,13 @@ This Node.js tool recursively scans a project directory based on provided argume
 In-Context Learning (ICL) enables a model to perform tasks by interpreting context provided within a prompt, eliminating the need for additional training or fine-tuning.
 
 [Learn more about In-Context Learning (ICL)](#in-context-learning-icl)
+
+## v0.1.22
+
+- **Smart Size Management**: Automatically handles large projects by tracking file sizes and preventing JavaScript string length errors
+- **Debug Mode**: Added `--debug` flag to help identify problematic files and directories during processing
+- **Improved Error Handling**: Better error messages with context about skipped files and directories
+- **Automatic Layout Chunking**: Intelligently truncates layout information for extremely large directories while preserving content
 
 ## v0.1.9 
 
@@ -211,6 +218,7 @@ llm-prepare -c "config.json"
       --custom-ignore-filename  Path to a file containing ignore patterns
                                                                         [string]
       --config                  Path to the config file                 [string]
+      --debug                   Show debugging information             [boolean]
   -v, --version                 Display the version number             [boolean]
 ```
 

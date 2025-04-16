@@ -19,37 +19,47 @@ async function writeAllOutputs(
   layoutIncluded,
   argv,
 ) {
-  let singleFileOutput = singleFileObjOutput.map((item) => item.content);
+  // Maximum safe string size (around 200MB to be safe)
+  const MAX_SAFE_STRING_SIZE = 200 * 1024 * 1024;
+  
+  // If chunk-size is specified, use that, otherwise use auto-chunking based on MAX_SAFE_STRING_SIZE
+  const chunkSizeBytes = argv["chunk-size"] 
+    ? argv["chunk-size"] * 1024 
+    : MAX_SAFE_STRING_SIZE;
 
-  if (argv["chunk-size"]) {
-    let currentOutput = "";
-    let accumulatedSize = 0;
-    const chunks = [];
+  let currentChunk = "";
+  let currentSize = 0;
+  const chunks = [];
+  
+  // Add layout to first chunk if needed
+  if (!layoutIncluded && !argv["suppress-layout"]) {
+    currentChunk = layout + "\n\n";
+    currentSize = currentChunk.length;
+  }
 
-    for (const content of singleFileOutput) {
-      if (accumulatedSize + content.length > argv["chunk-size"] * 1024) {
-        chunks.push(currentOutput.trim());
-        currentOutput = "";
-        accumulatedSize = layout.length;
-      }
-      currentOutput += content;
-      accumulatedSize += content.length;
+  // Process each file and add to chunks
+  for (const fileObj of singleFileObjOutput) {
+    const content = fileObj.content;
+    
+    // If adding this content would exceed chunk size, start a new chunk
+    if (currentSize + content.length > chunkSizeBytes) {
+      chunks.push(currentChunk);
+      currentChunk = "";
+      currentSize = 0;
     }
+    
+    currentChunk += content;
+    currentSize += content.length;
+  }
+  
+  // Add the last chunk if it has content
+  if (currentChunk) {
+    chunks.push(currentChunk);
+  }
 
-    if (currentOutput) {
-      chunks.push(currentOutput.trim());
-    }
-
-    for (let i = 0; i < chunks.length; i++) {
-      await writeChunkOutput(chunks[i], i + 1, argv, layout);
-    }
-  } else {
-    if (!layoutIncluded && !argv["suppress-layout"]) {
-      singleFileOutput.unshift(layout + "\n");
-      layoutIncluded = true;
-    }
-
-    await writeChunkOutput(singleFileOutput.join("\n"), 1, argv, "");
+  // Write all chunks to files
+  for (let i = 0; i < chunks.length; i++) {
+    await writeChunkOutput(chunks[i], i + 1, chunks.length, argv, i === 0 ? layout : "");
   }
 }
 
@@ -59,10 +69,11 @@ async function writeAllOutputs(
  *
  * @param {string} output - The content to be written.
  * @param {number} index - The index of the chunk (for file naming).
+ * @param {number} totalChunks - Total number of chunks.
  * @param {object} argv - Command-line arguments that may specify the output filename and other options.
  * @param {string} layout - The directory layout to be included at the beginning of each chunk.
  */
-async function writeChunkOutput(output, index, argv, layout) {
+async function writeChunkOutput(output, index, totalChunks, argv, layout) {
   let filename = argv["output-filename"];
 
   if (!filename) {
@@ -73,17 +84,12 @@ async function writeChunkOutput(output, index, argv, layout) {
   const extension = path.extname(filename);
   const baseName = path.basename(filename, extension);
   const indexedFilename =
-    index === 1
+    totalChunks === 1
       ? `${baseName}${extension}`
       : `${baseName}.${index}${extension}`;
 
-  let chunkOutput;
-  if (index === 1) {
-    chunkOutput = layout + "\n\n" + output;
-  } else {
-    chunkOutput = output;
-  }
-
+  let chunkOutput = output;
+  
   const outputDir = process.env.LLM_PREPARE_OUTPUT_DIR;
   let fullOutputPath;
 
@@ -96,7 +102,7 @@ async function writeChunkOutput(output, index, argv, layout) {
 
   try {
     await fs.writeFile(fullOutputPath, chunkOutput.trim(), "utf8");
-    console.log(`Output written to ${fullOutputPath}`);
+    console.log(`Output written to ${fullOutputPath}${totalChunks > 1 ? ` (chunk ${index} of ${totalChunks})` : ''}`);
   } catch (error) {
     console.error(
       `Failed to write output to ${fullOutputPath}: ${error.message}`,
