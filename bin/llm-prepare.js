@@ -30,19 +30,25 @@ async function runCli() {
     .option('-o, --output <file>', 'Output file (defaults to stdout)')
     .option('-f, --format <format>', 'Format the input (markdown, html, text)')
     .option('-m, --max-tokens <number>', 'Maximum tokens to include', parseInt)
-    .option('-p, --prompt <file>', 'Prompt template file')
+    .option('--prompt <file>', 'Prompt template file')
     .option('-v, --variables <json>', 'JSON string of variables for the prompt template')
     .option('-t, --truncate <strategy>', 'Truncation strategy (start, end, middle)')
     .option('-r, --render', 'Render content with a browser for JavaScript-heavy sites')
     .option('-d, --debug', 'Enable debug output')
     .option('-s, --system <message>', 'System message to prepend')
     .option('-u, --user <message>', 'User message to append')
+    .option('-c, --compress', 'Compress output by removing excessive whitespace')
     .option('--config <filepath>', 'Path to the JSON configuration file')
-    .option('--project-path <directoryPath>', 'Path to the project directory to process')
+    .option('-p, --project-path <directoryPath>', 'Path to the project directory to process')
     .option('--file-pattern <pattern>', 'Glob pattern for matching files (default: *)')
     .option('--no-layout', 'Suppress the ASCII layout view of the project structure')
     .option('--include-comments', 'Include comments in the output (default: false)')
     .option('--comment-style <style>', 'Comment style for file headers (default: //)')
+    .option('--ignore-gitignore', 'Disable processing of .gitignore files')
+    .option('--custom-ignore-string <patterns>', 'Comma-separated ignore patterns')
+    .option('--custom-ignore-filename <filepath>', 'Path to a custom ignore file')
+    .option('--default-ignore <filepath>', 'Path to a default ignore file')
+    .option('--show-default-ignore', 'Display the default ignore patterns')
     .parse(process.argv);
 
   let options = program.opts();
@@ -63,6 +69,14 @@ async function runCli() {
       }
       process.exit(1);
     }
+  }
+  
+  // Display default ignore patterns if requested
+  if (options.showDefaultIgnore) {
+    const { getDefaultIgnorePatterns } = await import('../src/utils/ignore-handler.js');
+    console.log('Default ignore patterns:');
+    console.log(getDefaultIgnorePatterns().join('\n'));
+    process.exit(0);
   }
   
   // Run the main processing with the merged options

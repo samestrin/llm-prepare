@@ -16,6 +16,7 @@ import { truncateText } from './processors/truncate.js';
 import { applyPromptTemplate } from './processors/prompt-template.js';
 import { processProjectDirectory } from './processors/project-processor.js';
 import { estimateTokenCount } from './utils/token-counter.js';
+import { compressText } from './processors/compress.js';
 
 /**
  * Main function to process text based on provided options
@@ -36,6 +37,7 @@ import { estimateTokenCount } from './utils/token-counter.js';
  * @param {boolean} options.suppressLayout - Whether to suppress layout view
  * @param {boolean} options.includeComments - Whether to include comments
  * @param {string} options.commentStyle - Comment style for file headers
+ * @param {boolean} options.compress - Whether to compress whitespace in output
  * @returns {Promise<void>}
  */
 export async function processText(options) {
@@ -115,7 +117,17 @@ export async function processText(options) {
     }
   }
   
-  // Step 7: Write output
+  // Step 7: Compress text if compress option is specified
+  if (options.compress) {
+    const beforeLength = processedText.length;
+    processedText = compressText(processedText);
+    
+    if (debug) {
+      console.error(`Debug: Compressed from ${beforeLength} to ${processedText.length} characters`);
+    }
+  }
+  
+  // Step 8: Write output
   await writeOutput(processedText, options.output);
   
   if (debug) {
