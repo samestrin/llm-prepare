@@ -6,6 +6,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { processText } from '../src/index.js';
+import { loadConfigFile, mergeArguments } from '../src/utils/config.js';
 
 // Load environment variables
 dotenv.config();
@@ -18,7 +19,7 @@ const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
 /**
  * Configure and run the CLI program
  */
-function runCli() {
+async function runCli() {
   program
     .name('llm-prepare')
     .description('A utility to prepare text for LLM consumption')
@@ -36,11 +37,30 @@ function runCli() {
     .option('-d, --debug', 'Enable debug output')
     .option('-s, --system <message>', 'System message to prepend')
     .option('-u, --user <message>', 'User message to append')
+    .option('--config <filepath>', 'Path to the JSON configuration file')
     .parse(process.argv);
 
-  const options = program.opts();
+  let options = program.opts();
   
-  // Run the main processing with the provided options
+  // If config option is provided, load and merge the config with CLI options
+  if (options.config) {
+    try {
+      const configOptions = await loadConfigFile(options.config);
+      options = mergeArguments(options, configOptions);
+      
+      if (options.debug) {
+        console.error('Debug: Loaded configuration from:', options.config);
+      }
+    } catch (error) {
+      console.error(`Error loading config file: ${error.message}`);
+      if (options.debug) {
+        console.error(error.stack);
+      }
+      process.exit(1);
+    }
+  }
+  
+  // Run the main processing with the merged options
   processText(options)
     .catch((error) => {
       console.error('Error:', error.message);
