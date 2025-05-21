@@ -73,6 +73,106 @@ llm-prepare --config config.json
 | `--version` | Show version number |
 | `--help` | Show help |
 
+## Project Directory Processing
+
+LLM-Prepare supports processing entire project directories, generating a consolidated view that includes both the project structure and file contents. This is particularly useful for providing context to LLMs about complex codebases.
+
+### Basic Usage
+
+"""bash
+# Process a project directory
+llm-prepare --project-path ./my-project --output result.txt
+
+# Use with specific file patterns
+llm-prepare --project-path ./my-project --file-pattern "*.js" --output js-files-only.txt
+
+# Process with compression to reduce token usage
+llm-prepare --project-path ./my-project --compress --output compressed-project.txt
+"""
+
+### Project Processing Options
+
+| Option | Description |
+|--------|-------------|
+| `-p, --project-path <directoryPath>` | Path to the project directory to process |
+| `--file-pattern <pattern>` | Glob pattern for matching files (default: "*") |
+| `--no-layout` | Suppress the ASCII layout view of the project structure |
+| `--include-comments` | Include comments in the output (default: false) |
+| `--comment-style <style>` | Comment style for file headers (default: "//") |
+| `-c, --compress` | Compress output by removing excessive whitespace |
+| `--chunk-size <kilobytes>` | Maximum size in KB for each output file | 
+
+### Ignore File Support
+
+LLM-Prepare respects `.gitignore` files by default and offers additional options for customizing which files to include or exclude:
+
+"""bash
+# Disable .gitignore processing
+llm-prepare --project-path ./my-project --ignore-gitignore
+
+# Use custom ignore patterns
+llm-prepare --project-path ./my-project --custom-ignore-string "node_modules,*.log,temp/*"
+
+# Use a custom ignore file
+llm-prepare --project-path ./my-project --custom-ignore-filename .customignore
+
+# Display default ignore patterns
+llm-prepare --show-default-ignore
+"""
+
+| Option | Description |
+|--------|-------------|
+| `--ignore-gitignore` | Disable processing of .gitignore files |
+| `--custom-ignore-string <patterns>` | Comma-separated ignore patterns |
+| `--custom-ignore-filename <filepath>` | Path to a custom ignore file |
+| `--default-ignore <filepath>` | Path to a default ignore file |
+| `--show-default-ignore` | Display the default ignore patterns |
+
+### Output Chunking
+
+For very large projects, you can split the output into multiple files based on size:
+
+"""bash
+# Split output into 500KB chunks
+llm-prepare --project-path ./my-project --chunk-size 500 --output project-output.txt
+"""
+
+This will generate files like `project-output_part1.txt`, `project-output_part2.txt`, etc., if the total size exceeds the specified chunk size.
+
+### Configuration File
+
+Project processing options can also be specified in a configuration file:
+
+"""json
+{
+  "args": {
+    "project-path": "./src",
+    "file-pattern": "*.js",
+    "include-comments": true,
+    "compress": true,
+    "chunk-size": 1000
+  },
+  "include": ["./src/", "./lib/"]
+}
+"""
+
+"""bash
+# Use with a configuration file
+llm-prepare --config my-config.json
+"""
+
+### Example: Processing a React Project
+
+"""bash
+# Process a React project, focusing on source code
+llm-prepare --project-path ./my-react-app --file-pattern "*.js,*.jsx,*.css" --custom-ignore-string "node_modules,build,public" --output react-codebase.txt
+"""
+
+This command will:
+1. Process all JavaScript, JSX, and CSS files in the project
+2. Exclude node_modules, build, and public directories
+3. Generate a consolidated file with the project structure and code content
+
 ## Prompt Templates
 
 Prompt templates support variable substitution using `{{variable}}` syntax. The input text is automatically available as `{{text}}` or `{{content}}`.
