@@ -14,20 +14,21 @@ A modern Node.js utility to prepare text for LLM consumption - handles truncatio
 - Truncate text to fit token limits with different strategies
 - Render JavaScript-heavy websites using Puppeteer
 - Add system/user messages for chat-based LLMs
+- Support for configuration files for repeated usage patterns
 
 ## Installation
 
-```bash
+"""bash
 # Install globally
 npm install -g llm-prepare
 
 # Or install locally
 npm install llm-prepare
-```
+"""
 
 ## Usage
 
-```bash
+"""bash
 # Basic usage
 llm-prepare --input example.txt --output result.txt
 
@@ -48,7 +49,10 @@ llm-prepare --input content.txt --system "Analyze the following text:" --user "W
 
 # Read from stdin and pipe output
 cat file.txt | llm-prepare --format markdown | tee output.md
-```
+
+# Use a configuration file for repeated settings
+llm-prepare --config config.json
+"""
 
 ## Command Line Options
 
@@ -65,6 +69,7 @@ cat file.txt | llm-prepare --format markdown | tee output.md
 | `-d, --debug` | Enable debug output |
 | `-s, --system <message>` | System message to prepend |
 | `-u, --user <message>` | User message to append |
+| `--config <filepath>` | Path to a JSON configuration file |
 | `--version` | Show version number |
 | `--help` | Show help |
 
@@ -74,17 +79,50 @@ Prompt templates support variable substitution using `{{variable}}` syntax. The 
 
 Example template:
 
-```
+"""
 SYSTEM: You are a {{model}} AI assistant that is an expert in {{task}}.
 
 USER: {{text}}
 
-ASSISTANT:
-```
+A:
+"""
+
+## Configuration Files
+
+Configuration files allow you to store frequently used settings in a JSON file, making it easier to reuse complex configurations.
+
+### Example Configuration File
+
+"""json
+{
+  "args": {
+    "output": "result.txt",
+    "format": "markdown",
+    "max-tokens": 1000,
+    "truncate": "end",
+    "system": "You are a helpful assistant",
+    "render": true
+  }
+}
+"""
+
+Command-line arguments will override any settings in the configuration file. This provides flexibility to use a base configuration and adjust specific settings as needed for each run.
+
+To use a configuration file:
+
+"""bash
+llm-prepare --config my-config.json
+"""
+
+You can also combine the configuration file with additional command-line arguments:
+
+"""bash
+llm-prepare --config my-config.json --input new-file.txt --max-tokens 2000
+"""
 
 ## Programmatic API
 
-```javascript
+"""javascript
 import { processText } from 'llm-prepare';
 
 // Process text with options
@@ -99,7 +137,7 @@ const options = {
 processText(options)
   .then(() => console.log('Processing complete'))
   .catch(err => console.error('Error:', err));
-```
+"""
 
 ## License
 
