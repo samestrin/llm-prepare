@@ -6,6 +6,7 @@
  * - Converting between formats (markdown, HTML, text)
  * - Truncating text based on token limits
  * - Applying prompt templates
+ * - Processing project directories
  */
 
 import { getInputText } from './io/input.js';
@@ -13,6 +14,7 @@ import { writeOutput } from './io/output.js';
 import { convertFormat } from './formatters/format-converter.js';
 import { truncateText } from './processors/truncate.js';
 import { applyPromptTemplate } from './processors/prompt-template.js';
+import { processProjectDirectory } from './processors/project-processor.js';
 import { estimateTokenCount } from './utils/token-counter.js';
 
 /**
@@ -29,6 +31,11 @@ import { estimateTokenCount } from './utils/token-counter.js';
  * @param {boolean} options.debug - Enable debug output
  * @param {string} options.system - System message to prepend
  * @param {string} options.user - User message to append
+ * @param {string} options.projectPath - Path to project directory
+ * @param {string} options.filePattern - File pattern for project processing
+ * @param {boolean} options.suppressLayout - Whether to suppress layout view
+ * @param {boolean} options.includeComments - Whether to include comments
+ * @param {string} options.commentStyle - Comment style for file headers
  * @returns {Promise<void>}
  */
 export async function processText(options) {
@@ -39,19 +46,32 @@ export async function processText(options) {
     console.error('Debug: Processing with options:', JSON.stringify(options, null, 2));
   }
   
-  // Step 1: Get input text from source
-  const text = await getInputText(options);
-  if (debug) {
-    console.error(`Debug: Retrieved input text (${text.length} characters)`);
-  }
+  let processedText;
   
-  // Step 2: Convert format if specified
-  let processedText = options.format 
-    ? await convertFormat(text, options.format, options) 
-    : text;
-  
-  if (debug) {
-    console.error(`Debug: After format conversion: ${processedText.length} characters`);
+  // Check if processing a project directory
+  if (options.projectPath) {
+    // Process project directory
+    processedText = await processProjectDirectory(options);
+    
+    if (debug) {
+      console.error(`Debug: Processed project directory: ${options.projectPath}`);
+      console.error(`Debug: Generated ${processedText.length} characters of content`);
+    }
+  } else {
+    // Step 1: Get input text from source (file, URL, stdin)
+    const text = await getInputText(options);
+    if (debug) {
+      console.error(`Debug: Retrieved input text (${text.length} characters)`);
+    }
+    
+    // Step 2: Convert format if specified
+    processedText = options.format 
+      ? await convertFormat(text, options.format, options) 
+      : text;
+    
+    if (debug) {
+      console.error(`Debug: After format conversion: ${processedText.length} characters`);
+    }
   }
   
   // Step 3: Apply prompt template if specified
