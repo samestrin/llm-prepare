@@ -49,6 +49,7 @@ async function runCli() {
     .option('--custom-ignore-filename <filepath>', 'Path to a custom ignore file')
     .option('--default-ignore <filepath>', 'Path to a default ignore file')
     .option('--show-default-ignore', 'Display the default ignore patterns')
+    .option('--chunk-size <kilobytes>', 'Maximum size in KB for each output file (creates multiple files if needed)', parseInt)
     .parse(process.argv);
 
   let options = program.opts();

@@ -38,6 +38,7 @@ import { compressText } from './processors/compress.js';
  * @param {boolean} options.includeComments - Whether to include comments
  * @param {string} options.commentStyle - Comment style for file headers
  * @param {boolean} options.compress - Whether to compress whitespace in output
+ * @param {number} options.chunkSize - Maximum size in KB for each output file
  * @returns {Promise<void>}
  */
 export async function processText(options) {
@@ -127,10 +128,17 @@ export async function processText(options) {
     }
   }
   
-  // Step 8: Write output
-  await writeOutput(processedText, options.output);
+  // Step 8: Write output (now with chunk size parameter)
+  await writeOutput(processedText, options.output, options.chunkSize);
   
   if (debug) {
     console.error('Debug: Processing complete');
+    if (options.chunkSize && options.output) {
+      const textSizeKB = Math.round(Buffer.byteLength(processedText, 'utf8') / 1024);
+      if (textSizeKB > options.chunkSize) {
+        const numChunks = Math.ceil(textSizeKB / options.chunkSize);
+        console.error(`Debug: Output split into ${numChunks} chunks based on ${options.chunkSize}KB limit`);
+      }
+    }
   }
 }
