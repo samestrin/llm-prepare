@@ -8,6 +8,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { globSync } from 'glob';
+import { removeComments, getFileHeaderCommentStyle } from '../utils/comment-handler.js';
 
 /**
  * Process a project directory and aggregate content from matching files
@@ -72,11 +73,16 @@ export async function processProjectDirectory(options) {
     const relativePath = path.relative(projectPath, file);
     const content = await fs.readFile(file, 'utf8');
     
-    // Process content based on options (will handle comments in future tasks)
-    const processedContent = includeComments ? content : content; // Placeholder for comment handling
+    // Process content based on options (handle comments)
+    const processedContent = includeComments 
+      ? content 
+      : removeComments(content, file);
+    
+    // Get dynamic comment style for file header based on file type
+    const headerCommentStyle = commentStyle || getFileHeaderCommentStyle(file);
     
     // Add file header with the appropriate comment style
-    output += `${commentStyle} FILE: ${relativePath}\n`;
+    output += `${headerCommentStyle} FILE: ${relativePath}\n`;
     output += processedContent + '\n\n';
   }
 
