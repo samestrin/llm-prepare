@@ -1,167 +1,104 @@
-const yargs = require("yargs/yargs");
-const { hideBin } = require("yargs/helpers");
-const packageJson = require("../package.json");
-const { handleError } = require("./utils/errorHandler");
-const { showDefaultIgnore } = require("./utils/ignoreUtils");
-const { loadConfigFile, mergeArguments } = require("./utils/configUtils");
-const { processPath } = require("./utils/pathUtils"); // New import for handling paths
-const { writeAllOutputs } = require("./utils/outputUtils"); // Ensure writeAllOutputs is properly imported
-const { convertWildcard, escapeRegExp } = require("./utils/stringUtils");
-const yargsBuilder = yargs(hideBin(process.argv));
+/**
+ * LLM-Prepare Main Module
+ * 
+ * Handles orchestration of text processing operations including:
+ * - Reading from different sources (files, URLs, stdin)
+ * - Converting between formats (markdown, HTML, text)
+ * - Truncating text based on token limits
+ * - Applying prompt templates
+ */
 
-if (
-	!process.argv.includes("--show-default-ignore") &&
-	!process.argv.includes("--show-prompts")
-) {
-	yargsBuilder
-		.option("config", {
-			describe: "Path to the config file",
-			type: "string",
-			demandOption: false,
-		})
-		.option("path", {
-			alias: "p",
-			describe: "Path to the project directory",
-			type: "string",
-			demandOption: false,
-		})
-		.option("file-pattern", {
-			alias: "f",
-			describe:
-				"Pattern of files to include, e.g., '\\.js$' or '*' for all files",
-			type: "string",
-			default: "*",
-		});
+import { getInputText } from './io/input.js';
+import { writeOutput } from './io/output.js';
+import { convertFormat } from './formatters/format-converter.js';
+import { truncateText } from './processors/truncate.js';
+import { applyPromptTemplate } from './processors/prompt-template.js';
+import { estimateTokenCount } from './utils/token-counter.js';
+
+/**
+ * Main function to process text based on provided options
+ * @param {Object} options - Command line options
+ * @param {string} options.input - Input source (file, url, or stdin)
+ * @param {string} options.output - Output file (defaults to stdout)
+ * @param {string} options.format - Format to convert to (markdown, html, text)
+ * @param {number} options.maxTokens - Maximum tokens to include
+ * @param {string} options.prompt - Prompt template file
+ * @param {string} options.variables - JSON string of variables for template
+ * @param {string} options.truncate - Truncation strategy (start, end, middle)
+ * @param {boolean} options.render - Render content with a browser
+ * @param {boolean} options.debug - Enable debug output
+ * @param {string} options.system - System message to prepend
+ * @param {string} options.user - User message to append
+ * @returns {Promise<void>}
+ */
+export async function processText(options) {
+  const { debug } = options;
+  
+  // Debug output
+  if (debug) {
+    console.error('Debug: Processing with options:', JSON.stringify(options, null, 2));
+  }
+  
+  // Step 1: Get input text from source
+  const text = await getInputText(options);
+  if (debug) {
+    console.error(`Debug: Retrieved input text (${text.length} characters)`);
+  }
+  
+  // Step 2: Convert format if specified
+  let processedText = options.format 
+    ? await convertFormat(text, options.format, options) 
+    : text;
+  
+  if (debug) {
+    console.error(`Debug: After format conversion: ${processedText.length} characters`);
+  }
+  
+  // Step 3: Apply prompt template if specified
+  if (options.prompt) {
+    const variables = options.variables 
+      ? JSON.parse(options.variables) 
+      : {};
+    
+    processedText = await applyPromptTemplate(processedText, options.prompt, variables);
+    
+    if (debug) {
+      console.error(`Debug: After applying prompt template: ${processedText.length} characters`);
+    }
+  }
+  
+  // Step 4: Add system message if specified
+  if (options.system) {
+    processedText = `SYSTEM: ${options.system}\n\n${processedText}`;
+  }
+  
+  // Step 5: Add user message if specified
+  if (options.user) {
+    processedText = `${processedText}\n\nUSER: ${options.user}`;
+  }
+  
+  // Step 6: Truncate text if max tokens specified
+  if (options.maxTokens) {
+    const strategy = options.truncate || 'end';
+    const beforeTokens = estimateTokenCount(processedText);
+    
+    processedText = truncateText(
+      processedText, 
+      options.maxTokens, 
+      strategy
+    );
+    
+    const afterTokens = estimateTokenCount(processedText);
+    
+    if (debug) {
+      console.error(`Debug: Truncated from ~${beforeTokens} to ~${afterTokens} tokens`);
+    }
+  }
+  
+  // Step 7: Write output
+  await writeOutput(processedText, options.output);
+  
+  if (debug) {
+    console.error('Debug: Processing complete');
+  }
 }
-
-yargsBuilder
-  .option("output-filename", {
-    alias: "o",
-    describe: "Output filename",
-    type: "string",
-    demandOption: false,
-  })
-  // Add new comment-style option
-  .option("comment-style", {
-    describe: "Override the comment style for file headers (e.g., 'python', 'java', 'html')",
-    type: "string",
-    demandOption: false,
-  })
-  .option("include-comments", {
-    describe: "Include comments? (Default: false)",
-    type: "boolean",
-    demandOption: false,
-    alias: "i",
-  })
-  .option("compress", {
-    describe: "Compress? (Default: false)",
-    type: "boolean",
-    demandOption: false,
-  })
-  .option("chunk-size", {
-    describe: "Maximum size (in kilobytes) of each file",
-    type: "number",
-    demandOption: false,
-  })
-  .option("suppress-layout", {
-    alias: "s",
-    describe: "Suppress layout in output (Default: false)",
-    type: "boolean",
-    demandOption: false,
-  })
-  .option("default-ignore", {
-    describe: "Use a custom default ignore file",
-    type: "string",
-    demandOption: false,
-  })
-  .option("ignore-gitignore", {
-    describe: "Ignore .gitignore file in the root of the project directory",
-    type: "boolean",
-    demandOption: false,
-  })
-  .option("show-default-ignore", {
-    describe: "Show default ignore file",
-    type: "boolean",
-    demandOption: false,
-  })
-  .option("show-prompts", {
-    describe: "Show example prompts in your browser",
-    type: "boolean",
-    demandOption: false,
-  })
-  .option("custom-ignore-string", {
-    describe: "Comma-separated list of ignore patterns",
-    type: "string",
-    demandOption: false,
-  })
-  .option("custom-ignore-filename", {
-    describe: "Path to a file containing ignore patterns",
-    type: "string",
-    demandOption: false,
-  })
-  .version("v", "Display the version number", packageJson.version)
-  .alias("v", "version").argv;
-
-const argv = yargsBuilder.argv;
-
-async function main(argv) {
-	let config = {};
-
-	// Load and merge config file if --config option is provided
-	if (argv.config) {
-		config = await loadConfigFile(argv.config);
-		argv = mergeArguments(argv, config.args);
-	}
-
-	// make sure compress is included
-	if (!argv.compress && argv.c) {
-		argv.compress = argv.c;
-	}
-
-	// Check if path is provided or fallback to include array
-	let pathsToProcess = [];
-	if (argv.path) {
-		pathsToProcess.push(argv.path);
-	} else if (config.include && config.include.length > 0) {
-		pathsToProcess = config.include;
-	} else {
-		console.warn("Either a path or an include array must be provided.");
-		process.exit(1);
-	}
-
-	let layout = "";
-	let layoutIncluded = false;
-	let accumulatedOutput = []; // New array to accumulate all outputs
-
-	if ("show-default-ignore" in argv) {
-		await showDefaultIgnore(argv);
-		return;
-	} else if ("show-prompts" in argv) {
-		const open = (await import("open")).default;
-		await open(
-			"https://github.com/samestrin/llm-prepare/tree/main/example-prompts"
-		);
-		return;
-	}
-
-	const filePattern = new RegExp(
-		convertWildcard(escapeRegExp(argv["file-pattern"]))
-	);
-
-	for (const pathToProcess of pathsToProcess) {
-		await processPath(
-			pathToProcess,
-			argv,
-			layout,
-			layoutIncluded,
-			config.include || [],
-			filePattern,
-			accumulatedOutput
-		);
-	}
-
-	// After all paths are processed, write the accumulated output
-	await writeAllOutputs(accumulatedOutput, layout, layoutIncluded, argv);
-}
-
-main(argv).catch(handleError);
