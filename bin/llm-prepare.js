@@ -40,7 +40,7 @@ async function runCli() {
     .option('--config <filepath>', 'Path to the JSON configuration file')
     .option('--project-path <directoryPath>', 'Path to the project directory to process')
     .option('--file-pattern <pattern>', 'Glob pattern for matching files (default: *)')
-    .option('--suppress-layout', 'Suppress the ASCII layout view of the project structure')
+    .option('--no-layout', 'Suppress the ASCII layout view of the project structure')
     .option('--include-comments', 'Include comments in the output (default: false)')
     .option('--comment-style <style>', 'Comment style for file headers (default: //)')
     .parse(process.argv);
