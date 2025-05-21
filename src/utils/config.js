@@ -1,20 +1,19 @@
-const fs = require("fs-extra");
-const { handleError } = require("./errorHandler");
+import fs from 'fs/promises';
 
 /**
  * Loads the configuration file and parses it as JSON.
  * @param {string} filepath - Path to the config file.
  * @returns {object} Parsed JSON content of the config file.
+ * @throws {Error} If the file cannot be read or parsed.
  */
-async function loadConfigFile(filepath) {
+export async function loadConfigFile(filepath) {
   try {
-    const content = await fs.readFile(filepath, "utf8");
+    const content = await fs.readFile(filepath, 'utf8');
     return JSON.parse(content);
   } catch (error) {
-    handleError(
-      new Error(`Failed to load or parse config file: ${error.message}`)
-    );
-    throw error; // Rethrow the error after logging it
+    const message = `Failed to load or parse config file: ${error.message}`;
+    console.error(message);
+    throw new Error(message);
   }
 }
 
@@ -25,8 +24,23 @@ async function loadConfigFile(filepath) {
  * @param {object} configArgs - Arguments defined in the config file.
  * @returns {object} Merged arguments object.
  */
-function mergeArguments(cliArgs, configArgs) {
-  return { ...configArgs, ...cliArgs };
+export function mergeArguments(cliArgs, configArgs) {
+  // Start with configArgs (if any) and override with cliArgs
+  const mergedArgs = { ...configArgs };
+  
+  // Process the args property from the config file if it exists
+  if (configArgs && configArgs.args) {
+    Object.assign(mergedArgs, configArgs.args);
+    // Remove the original args property to flatten the structure
+    delete mergedArgs.args;
+  }
+  
+  // CLI arguments take precedence, only override non-undefined values
+  for (const [key, value] of Object.entries(cliArgs)) {
+    if (value !== undefined) {
+      mergedArgs[key] = value;
+    }
+  }
+  
+  return mergedArgs;
 }
-
-module.exports = { loadConfigFile, mergeArguments };
