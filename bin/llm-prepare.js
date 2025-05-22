@@ -51,6 +51,7 @@ async function runCli() {
     .option('--show-default-ignore', 'Display the default ignore patterns')
     .option('--show-templates', 'Show available templates in your browser')
     .option('--chunk-size <kilobytes>', 'Maximum size in KB for each output file (creates multiple files if needed)', parseInt)
+    .option('--folder-output-level <depth>', 'Generate output files at the specified directory depth level', parseInt)
     .parse(process.argv);
 
   let options = program.opts();
@@ -69,6 +70,21 @@ async function runCli() {
       if (options.debug) {
         console.error(error.stack);
       }
+      process.exit(1);
+    }
+  }
+  
+  // Validate folder-output-level option
+  if (options.folderOutputLevel !== undefined) {
+    // Check if output option is provided
+    if (!options.output) {
+      console.error('Error: When using --folder-output-level, the -o, --output option is required to specify the output filename.');
+      process.exit(1);
+    }
+    
+    // Ensure folderOutputLevel is a non-negative integer
+    if (isNaN(options.folderOutputLevel) || options.folderOutputLevel < 0) {
+      console.error('Error: --folder-output-level must be a non-negative integer.');
       process.exit(1);
     }
   }
