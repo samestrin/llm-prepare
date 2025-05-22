@@ -9,6 +9,7 @@ A modern Node.js utility to prepare text for LLM consumption - handles truncatio
 ## Features
 
 - Read from files, URLs, or standard input
+- Convert complex projects into individual files or chunks for LLM consumption
 - Convert between formats (Markdown, HTML, plain text)
 - Apply prompt templates with variable substitution
 - Truncate text to fit token limits with different strategies
@@ -30,7 +31,7 @@ npm install llm-prepare
 
 ```bash
 # Basic usage
-llm-prepare --input example.txt --output result.txt
+llm-prepare -i example.txt -o result.txt
 
 # Format conversion
 llm-prepare --input webpage.html --format markdown --output result.md
@@ -220,12 +221,12 @@ Prompt templates support variable substitution using `{{variable}}` syntax. The 
 
 Example template:
 
-```
+```plaintext
 SYSTEM: You are a {{model}} AI assistant that is an expert in {{task}}.
 
 USER: {{text}}
 
-A:
+ASSISTANT: Understood. I will complete the {{task}}.
 ```
 
 ## Configuration Files
