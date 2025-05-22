@@ -4,18 +4,13 @@
 
 ![Version 2.0](https://img.shields.io/badge/Version-2.0-blue) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Built with Node.js](https://img.shields.io/badge/Built%20with-Node.js-green)](https://nodejs.org/)
 
-A modern Node.js utility to prepare text for LLM consumption - handles truncation, prompt formatting, and preprocessing from various sources.
+**llm-prepare** is a Node.js tool that converts complex project directory structures and files into a single flat file or set of flat files, facilitating processing using In-Context Learning (ICL) prompts. It also offers additional features for text preprocessing from various sources, format conversion, and prompt templating.
 
-## Features
+### What is In-Context Learning (ICL)
 
-- Read from files, URLs, or standard input
-- Convert complex projects into individual files or chunks for LLM consumption
-- Convert between formats (Markdown, HTML, plain text)
-- Apply prompt templates with variable substitution
-- Truncate text to fit token limits with different strategies
-- Render JavaScript-heavy websites using Puppeteer
-- Add system/user messages for chat-based LLMs
-- Support for configuration files for repeated usage patterns
+In-Context Learning (ICL) enables a model to perform tasks by interpreting context provided within a prompt, eliminating the need for additional training or fine-tuning.
+
+[Learn more about In-Context Learning (ICL)](#in-context-learning-icl)
 
 ## Installation
 
@@ -27,53 +22,243 @@ npm install -g llm-prepare
 npm install llm-prepare
 ```
 
-## Usage
+## Core Feature: Project Directory Processing
+
+LLM-Prepare excels at processing entire project directories, generating a consolidated view that includes both the project structure and file contents. This is particularly useful for providing comprehensive context to LLMs about complex codebases, enabling tasks like code analysis, documentation generation, and Q&A.
+
+Key capabilities for project processing include:
+- **Layout View**: Provides an ASCII layout view of your project.
+- **Directory Traversal**: Recursively scans through the project directory.
+- **Custom File Filtering**: Includes files based on specified patterns.
+- **Ignore Support**: Automatically respects `.gitignore` files and allows custom ignore rules.
+- **Output Consolidation**: Generates a single flat file or multiple chunked files from the consolidated view.
+- **Comment Handling**: Optionally include or exclude comments from the output.
+- **Compression**: Reduces output size by removing unnecessary whitespace, optimizing for token limits.
+
+### Basic Usage (Project Processing)
 
 ```bash
-# Basic usage
+# Process a project directory and output to console
+llm-prepare -p ./my-project
+
+# Process a project directory and save to a file
+llm-prepare --project-path ./my-project -o result.txt
+
+# Use with specific file patterns (e.g., only JavaScript files)
+llm-prepare --project-path ./my-project --file-pattern "*.js" --output js-files-only.txt
+
+# Process with compression to reduce token usage
+llm-prepare --project-path ./my-project --compress --output compressed-project.txt
+
+# Generate separate output files for each direct subdirectory
+llm-prepare --project-path ./my-project --output summary.txt --folder-output-level 1
+
+# Generate output files for all subdirectories
+llm-prepare --project-path ./my-project --output summary.txt --folder-output-level all
+```
+
+### Project Processing Options
+
+| Option | Description |
+|--------|-------------|
+| `-p, --project-path <directoryPath>` | Path to the project directory to process |
+| `--file-pattern <pattern>` | Glob pattern for matching files (default: "*") |
+| `--no-layout` | Suppress the ASCII layout view of the project structure |
+| `--include-comments` | Include comments in the output (default: false) |
+| `--comment-style <style>` | Comment style for file headers (default: "//") |
+| `-c, --compress` | Compress output by removing excessive whitespace |
+| `--chunk-size <kilobytes>` | Maximum size in KB for each output file (creates multiple files if needed) |
+| `--folder-output-level <depth>` | Generate output files at the specified directory depth level or for all subdirectories (number or "all") |
+
+### Per-Folder Output Generation
+
+The `--folder-output-level` option allows you to generate separate output files for each directory at a specified depth within your project or for all subdirectories. This is particularly useful for large, complex projects where you want to create more focused documentation or context files.
+
+```bash
+# Generate output files for each direct subdirectory (depth 1)
+llm-prepare --project-path ./my-project --output readme.md --folder-output-level 1
+
+# Generate output files at the project root level (depth 0)
+llm-prepare --project-path ./my-project --output summary.txt --folder-output-level 0
+
+# Generate output files for subdirectories two levels deep
+llm-prepare --project-path ./my-project --output module-docs.txt --folder-output-level 2
+
+# Generate output files for all subdirectories in the project
+llm-prepare --project-path ./my-project --output project-summary.md --folder-output-level all
+```
+
+When using `--folder-output-level`:
+- The `-o, --output` option is required and specifies the filename to use for each generated file.
+- Each output file contains only the content from its directory and subdirectories.
+- The project layout view is generated per directory (unless `--no-layout` is specified).
+- All other processing options (like `--file-pattern`, `--include-comments`, etc.) are applied to each directory's content.
+- If no directories exist at the specified depth, a warning is displayed and no files are generated.
+- When using `all` as the value, an output file is generated for every subdirectory (including the root if it contains files) that has processable content.
+
+This feature is particularly useful for:
+- Creating separate README files for each module in a large project.
+- Generating focused context files for LLMs to analyze specific parts of a codebase.
+- Breaking down large projects into manageable chunks for documentation or analysis.
+- Creating comprehensive documentation for all components of a complex project structure.
+
+### Ignore File Support
+
+LLM-Prepare respects `.gitignore` files by default and offers additional options for customizing which files to include or exclude:
+
+```bash
+# Disable .gitignore processing
+llm-prepare --project-path ./my-project --ignore-gitignore
+
+# Use custom ignore patterns
+llm-prepare --project-path ./my-project --custom-ignore-string "node_modules,*.log,temp/*"
+
+# Use a custom ignore file
+llm-prepare --project-path ./my-project --custom-ignore-filename .customignore
+
+# Display default ignore patterns
+llm-prepare --show-default-ignore
+```
+
+| Option | Description |
+|--------|-------------|
+| `--ignore-gitignore` | Disable processing of .gitignore files |
+| `--custom-ignore-string <patterns>` | Comma-separated ignore patterns |
+| `--custom-ignore-filename <filepath>` | Path to a custom ignore file |
+| `--default-ignore <filepath>` | Path to a default ignore file (overrides built-in defaults) |
+| `--show-default-ignore` | Display the default ignore patterns |
+
+
+## Additional Capabilities and General Usage
+
+Beyond project processing, LLM-Prepare offers a versatile set of tools for preparing text from various sources:
+
+- **Read from Diverse Inputs**: Process text from local files, URLs, or standard input (stdin).
+- **Format Conversion**: Convert content between Markdown, HTML, and plain text.
+- **Text Truncation**: Intelligently truncate text to meet specific token limits using strategies like 'start', 'end', or 'middle'.
+- **JavaScript Rendering**: Fetch and render content from JavaScript-heavy websites using Puppeteer.
+- **Prompt Templating**: Apply predefined or custom prompt templates with dynamic variable substitution.
+- **Chat Message Formatting**: Prepend system messages and append user messages for chat-based LLM interactions.
+- **Configuration Files**: Use JSON configuration files for complex or repeated command setups.
+
+### General Usage Examples
+
+```bash
+# Basic file input and output
 llm-prepare -i example.txt -o result.txt
 
-# Format conversion
+# Format conversion (HTML to Markdown)
 llm-prepare --input webpage.html --format markdown --output result.md
 
-# Truncation
+# Truncation to a token limit
 llm-prepare --input document.txt --max-tokens 1000 --truncate end
 
-# Use with prompt template
+# Use with a prompt template
 llm-prepare --input data.txt --prompt templates/analysis.txt --variables '{"model": "gpt-4", "task": "summarize"}'
 
 # Process URLs with JavaScript rendering
 llm-prepare --input https://example.com --render --format text
 
-# Use system and user messages
+# Use system and user messages for chat prompts
 llm-prepare --input content.txt --system "Analyze the following text:" --user "What are the key points?"
 
 # Read from stdin and pipe output
 cat file.txt | llm-prepare --format markdown | tee output.md
 
 # Use a configuration file for repeated settings
-llm-prepare --config config.json
+llm-prepare --config path/to/your/config.json
 ```
 
 ## Command Line Options
 
 | Option | Description |
 |--------|-------------|
-| `-i, --input <source>` | Input source (file, URL, or stdin) |
+| `-p, --project-path <directoryPath>` | Path to the project directory to process |
+| `--file-pattern <pattern>` | Glob pattern for matching files (default: "*") |
+| `--no-layout` | Suppress the ASCII layout view of the project structure |
+| `--include-comments` | Include comments in the output (default: false) |
+| `--comment-style <style>` | Comment style for file headers (default: "//") |
+| `-c, --compress` | Compress output by removing excessive whitespace (useful for project processing) |
+| `--chunk-size <kilobytes>` | Maximum size in KB for each output file (creates multiple files if needed) |
+| `--folder-output-level <depth>` | Generate output files at the specified directory depth level or for all subdirectories (number or "all") |
+| `--ignore-gitignore` | Disable processing of .gitignore files |
+| `--custom-ignore-string <patterns>` | Comma-separated ignore patterns |
+| `--custom-ignore-filename <filepath>` | Path to a custom ignore file |
+| `--default-ignore <filepath>` | Path to a default ignore file (overrides built-in defaults) |
+| `--show-default-ignore` | Display the default ignore patterns |
+| `-i, --input <source>` | Input source (file, URL, or stdin for general text processing) |
 | `-o, --output <file>` | Output file (defaults to stdout) |
 | `-f, --format <format>` | Format to convert to (markdown, html, text) |
 | `-m, --max-tokens <number>` | Maximum tokens to include |
 | `--prompt <file>` | Prompt template file |
-| `--show-prompts` | Review prompts latest library online at GitHub |
 | `--variables <json>` | JSON string of variables for the prompt template |
 | `-t, --truncate <strategy>` | Truncation strategy (start, end, middle) |
 | `-r, --render` | Render content with a browser for JavaScript-heavy sites |
-| `-d, --debug` | Enable debug output |
 | `-s, --system <message>` | System message to prepend |
 | `-u, --user <message>` | User message to append |
 | `--config <filepath>` | Path to a JSON configuration file |
+| `--show-templates` | Show available templates in your browser (opens GitHub) |
+| `-d, --debug` | Enable debug output |
 | `-v, --version` | Show version number |
 | `--help` | Show help |
+
+## Configuration System
+
+LLM-Prepare supports JSON configuration files to predefine command-line arguments and specify multiple project directories for processing. This is useful for complex or repeated command setups.
+
+To run the script with a config file:
+
+```bash
+llm-prepare -c path/to/your/config.json
+
+llm-prepare --config path/to/your/config.json
+```
+
+### Configuration File Structure
+A configuration file can contain two main keys: args and include .
+
+- args : An object where keys are command-line options (long form, without leading dashes) and values are their settings. For example, "output": "result.txt" is equivalent to --output result.txt .
+- include : An array of strings, where each string is a path to a project directory that should be processed.
+
+### Example `config.json` file:
+
+```json
+{
+	"args": {
+		"output-filename": "output.txt",
+		"compress": true
+	},
+	"include": ["./src/", "./lib/"]
+}
+```
+
+### Processing Multiple Directories with include
+
+The include array allows you to specify multiple project directories. LLM-Prepare will process each directory listed in this array.
+
+- Combined with -p, --project-path : If you also use the -p (or --project-path ) command-line option, the path specified via CLI will be processed in addition to all paths listed in the include array.
+- Path Resolution : Paths in the include array are resolved relative to the location of the configuration file.
+- Invalid Paths : If a path in the include array is invalid or inaccessible, a warning will be issued, and llm-prepare will continue processing the other valid paths.
+
+### Output Behavior with Multiple Projects
+
+When multiple project directories are processed (either through include , -p , or a combination):
+
+- Single File Output (Default or -o <filename> ) :
+  
+  - The content (including file structures and file contents) from all specified project directories is aggregated.
+  - If layout view is enabled (default), a combined layout representing all processed projects will be generated, followed by the concatenated content of all files.
+  - This aggregated content is then written to a single output file or to standard output.
+
+- Folder-Level Output ( --folder-output-level <depth|all> ) :
+  
+  - LLM-Prepare processes all specified project directories first.
+  - It then identifies all unique directories at the specified folderOutputLevel across all processed projects.
+  - For each such unique directory path, a single output file is generated. This file will contain the consolidated content (layout and file data) from that specific directory, sourced from any of the input projects that contain a directory at that path.
+  - For example, if your config includes projectA and projectB , and both have a src/components subdirectory, and you use --folder-output-level 2 -o component_summary.md , the output file src/components/component_summary.md (relative to your output directory or CWD) would contain aggregated content from both projectA/src/components and projectB/src/components .
+  - The -o, --output <filename> option is used to determine the name of the file created within each output folder.
+
+All other processing options (e.g., --compress , --include-comments , --file-pattern , prompt templating) are applied to the content sourced from all projects. For instance, ignore patterns ( .gitignore , custom ignores) are resolved relative to each respective project path they originate from.
 
 ## Template System
 
@@ -100,252 +285,23 @@ These templates require minimal variable input and are designed for straightforw
 To use a template, specify the path to the template file with the `--prompt` option and provide any required variables with the `--variables` option:
 
 ```bash
-# Example: Using a template for code Q&A
-llm-prepare --prompt templates/multi-variable/coding/question-and-answer.md --variables "language:Python" "questions_asked:What does the main function do?" --file path/to/your/code.py
+# Example: Using a template for code Q&A with project context
+llm-prepare --project-path ./my-python-project --prompt templates/multi-variable/coding/question-and-answer.md --variables '{"language":"Python", "questions_asked":"What does the main function do?"}'
 
-# Example: Generating a README for a project
-llm-prepare --prompt templates/simple/README/basic-readme-generation.md --project-path ./my-project
+# Example: Generating a README for a project using a template
+llm-prepare --project-path ./my-project --prompt templates/simple/README/basic-readme-generation.md
+
+# Example: Using a template with general input
+llm-prepare --input api_spec.json --prompt templates/multi-variable/general/summarize-and-explain.md --variables '{"topic":"API Specification"}'
 ```
 
-Each template has specific variables it accepts. The `{{text}}` variable is automatically populated with the content of the file(s) you are processing.
+Each template has specific variables it accepts. The `{{text}}` variable is automatically populated with the content of the file(s) or project you are processing.
 
 ### Template Documentation
 
 For a complete list of available templates and their documentation, refer to the [Templates README](templates/README.md) file.
 
 All templates have been primarily tested with OpenAI's GPT-4o model. While they should work with other capable LLMs, outputs may vary and require adaptation.
-
-## Project Directory Processing
-
-LLM-Prepare supports processing entire project directories, generating a consolidated view that includes both the project structure and file contents. This is particularly useful for providing context to LLMs about complex codebases.
-
-### Basic Usage
-
-```bash
-# Process a project directory
-llm-prepare -p ./my-project -o result.txt
-
-# Use with specific file patterns
-llm-prepare --project-path ./my-project --file-pattern "*.js" --output js-files-only.txt
-
-# Process with compression to reduce token usage
-llm-prepare --project-path ./my-project --compress --output compressed-project.txt
-
-# Generate separate output files for each subdirectory
-llm-prepare --project-path ./my-project --output summary.txt --folder-output-level 1
-
-# Generate output files for all subdirectories
-llm-prepare --project-path ./my-project --output summary.txt --folder-output-level all
-```
-
-### Project Processing Options
-
-| Option | Description |
-|--------|-------------|
-| `-p, --project-path <directoryPath>` | Path to the project directory to process |
-| `--file-pattern <pattern>` | Glob pattern for matching files (default: "*") |
-| `--no-layout` | Suppress the ASCII layout view of the project structure |
-| `--include-comments` | Include comments in the output (default: false) |
-| `--comment-style <style>` | Comment style for file headers (default: "//") |
-| `-c, --compress` | Compress output by removing excessive whitespace |
-| `--chunk-size <kilobytes>` | Maximum size in KB for each output file | 
-| `--folder-output-level <depth>` | Generate output files at the specified directory depth level or for all subdirectories (number or "all") |
-
-### Per-Folder Output Generation
-
-The `--folder-output-level` option allows you to generate separate output files for each directory at a specified depth within your project or for all subdirectories. This is particularly useful for large, complex projects where you want to create more focused documentation or context files.
-
-```bash
-# Generate output files for each direct subdirectory (depth 1)
-llm-prepare --project-path ./my-project --output readme.md --folder-output-level 1
-
-# Generate output files at the project root level (depth 0)
-llm-prepare --project-path ./my-project --output summary.txt --folder-output-level 0
-
-# Generate output files for subdirectories two levels deep
-llm-prepare --project-path ./my-project --output module-docs.txt --folder-output-level 2
-
-# Generate output files for all subdirectories in the project
-llm-prepare --project-path ./my-project --output project-summary.md --folder-output-level all
-```
-
-When using `--folder-output-level`:
-
-- The `-o, --output` option is required and specifies the filename to use for each generated file
-- Each output file contains only the content from its directory and subdirectories
-- The project layout view is generated per directory (unless `--no-layout` is specified)
-- All other processing options (like `--file-pattern`, `--include-comments`, etc.) are applied to each directory's content
-- If no directories exist at the specified depth, a warning is displayed and no files are generated
-- When using `all` as the value, an output file is generated for every subdirectory (including the root if it contains files) that has processable content
-
-This feature is particularly useful for:
-- Creating separate README files for each module in a large project
-- Generating focused context files for LLMs to analyze specific parts of a codebase
-- Breaking down large projects into manageable chunks for documentation or analysis
-- Creating comprehensive documentation for all components of a complex project structure
-
-### Ignore File Support
-
-LLM-Prepare respects `.gitignore` files by default and offers additional options for customizing which files to include or exclude:
-
-```bash
-# Disable .gitignore processing
-llm-prepare --project-path ./my-project --ignore-gitignore
-
-# Use custom ignore patterns
-llm-prepare --project-path ./my-project --custom-ignore-string "node_modules,*.log,temp/*"
-
-# Use a custom ignore file
-llm-prepare --project-path ./my-project --custom-ignore-filename .customignore
-
-# Display default ignore patterns
-llm-prepare --show-default-ignore
-```
-
-| Option | Description |
-|--------|-------------|
-| `--ignore-gitignore` | Disable processing of .gitignore files |
-| `--custom-ignore-string <patterns>` | Comma-separated ignore patterns |
-| `--custom-ignore-filename <filepath>` | Path to a custom ignore file |
-| `--default-ignore <filepath>` | Path to a default ignore file |
-| `--show-default-ignore` | Display the default ignore patterns |
-
-### Output Chunking
-
-For very large projects, you can split the output into multiple files based on size:
-
-```bash
-# Split output into 500KB chunks
-llm-prepare --project-path ./my-project --chunk-size 500 --output project-output.txt
-```
-
-This will generate files like `project-output_part1.txt`, `project-output_part2.txt`, etc., if the total size exceeds the specified chunk size.
-
-### Configuration File
-
-Project processing options can also be specified in a configuration file:
-
-```json
-{
-  "args": {
-    "project-path": "./src",
-    "file-pattern": "*.js",
-    "include-comments": true,
-    "compress": true,
-    "chunk-size": 1000,
-    "folder-output-level": 1
-  },
-  "include": ["./src/", "./lib/"]
-}
-```
-
-```bash
-# Use with a configuration file
-llm-prepare --config my-config.json
-```
-
-### Example: Processing a React Project
-
-```bash
-# Process a React project, focusing on source code
-llm-prepare --project-path ./my-react-app --file-pattern "*.js,*.jsx,*.css" --custom-ignore-string "node_modules,build,public" --output react-codebase.txt
-```
-
-This command will:
-1. Process all JavaScript, JSX, and CSS files in the project
-2. Exclude node_modules, build, and public directories
-3. Generate a consolidated file with the project structure and code content
-
-### Example: Generating Per-Module Documentation
-
-```bash
-# Generate separate documentation for each module in a project
-llm-prepare --project-path ./my-project --folder-output-level 1 --output README.md --prompt templates/simple/README/module-readme.md
-```
-
-This command will:
-1. Process each direct subdirectory of the project
-2. Apply the specified prompt template to each directory's content
-3. Generate a README.md file in each subdirectory with focused documentation
-
-### Example: Comprehensive Project Documentation
-
-```bash
-# Generate documentation for all subdirectories in a project
-llm-prepare --project-path ./my-project --folder-output-level all --output README.md --prompt templates/simple/README/module-readme.md
-```
-
-This command will:
-1. Process every subdirectory in the project that contains matching files
-2. Apply the specified prompt template to each directory's content
-3. Generate a README.md file in each subdirectory with focused documentation
-4. Create a comprehensive documentation structure throughout the entire project
-
-## Prompt Templates
-
-Prompt templates support variable substitution using `{{variable}}` syntax. The input text is automatically available as `{{text}}` or `{{content}}`.
-
-Example template:
-
-```plaintext
-SYSTEM: You are a {{model}} AI assistant that is an expert in {{task}}.
-
-USER: {{text}}
-
-A: Understood. I will complete the {{task}}.
-```
-
-## Configuration Files
-
-Configuration files allow you to store frequently used settings in a JSON file, making it easier to reuse complex configurations.
-
-### Example Configuration File
-
-```json
-{
-  "args": {
-    "output": "result.txt",
-    "format": "markdown",
-    "max-tokens": 1000,
-    "truncate": "end",
-    "system": "You are a helpful assistant",
-    "render": true
-  }
-}
-```
-
-Command-line arguments will override any settings in the configuration file. This provides flexibility to use a base configuration and adjust specific settings as needed for each run.
-
-To use a configuration file:
-
-```bash
-llm-prepare --config my-config.json
-```
-
-You can also combine the configuration file with additional command-line arguments:
-
-```bash
-llm-prepare --config my-config.json --input new-file.txt --max-tokens 2000
-```
-
-## Programmatic API
-
-```javascript
-import { processText } from 'llm-prepare';
-
-// Process text with options
-const options = {
-  input: 'file.txt',
-  format: 'markdown',
-  maxTokens: 2000,
-  truncate: 'end',
-  debug: true
-};
-
-processText(options)
-  .then(() => console.log('Processing complete'))
-  .catch(err => console.error('Error:', err));
-```
 
 ## In-Context Learning (ICL)
 
