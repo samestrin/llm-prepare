@@ -130,6 +130,12 @@ llm-prepare --project-path ./my-project --file-pattern "*.js" --output js-files-
 
 # Process with compression to reduce token usage
 llm-prepare --project-path ./my-project --compress --output compressed-project.txt
+
+# Generate separate output files for each subdirectory
+llm-prepare --project-path ./my-project --output summary.txt --folder-output-level 1
+
+# Generate output files for all subdirectories
+llm-prepare --project-path ./my-project --output summary.txt --folder-output-level all
 ```
 
 ### Project Processing Options
@@ -143,6 +149,40 @@ llm-prepare --project-path ./my-project --compress --output compressed-project.t
 | `--comment-style <style>` | Comment style for file headers (default: "//") |
 | `-c, --compress` | Compress output by removing excessive whitespace |
 | `--chunk-size <kilobytes>` | Maximum size in KB for each output file | 
+| `--folder-output-level <depth>` | Generate output files at the specified directory depth level or for all subdirectories (number or "all") |
+
+### Per-Folder Output Generation
+
+The `--folder-output-level` option allows you to generate separate output files for each directory at a specified depth within your project or for all subdirectories. This is particularly useful for large, complex projects where you want to create more focused documentation or context files.
+
+```bash
+# Generate output files for each direct subdirectory (depth 1)
+llm-prepare --project-path ./my-project --output readme.md --folder-output-level 1
+
+# Generate output files at the project root level (depth 0)
+llm-prepare --project-path ./my-project --output summary.txt --folder-output-level 0
+
+# Generate output files for subdirectories two levels deep
+llm-prepare --project-path ./my-project --output module-docs.txt --folder-output-level 2
+
+# Generate output files for all subdirectories in the project
+llm-prepare --project-path ./my-project --output project-summary.md --folder-output-level all
+```
+
+When using `--folder-output-level`:
+
+- The `-o, --output` option is required and specifies the filename to use for each generated file
+- Each output file contains only the content from its directory and subdirectories
+- The project layout view is generated per directory (unless `--no-layout` is specified)
+- All other processing options (like `--file-pattern`, `--include-comments`, etc.) are applied to each directory's content
+- If no directories exist at the specified depth, a warning is displayed and no files are generated
+- When using `all` as the value, an output file is generated for every subdirectory (including the root if it contains files) that has processable content
+
+This feature is particularly useful for:
+- Creating separate README files for each module in a large project
+- Generating focused context files for LLMs to analyze specific parts of a codebase
+- Breaking down large projects into manageable chunks for documentation or analysis
+- Creating comprehensive documentation for all components of a complex project structure
 
 ### Ignore File Support
 
@@ -192,7 +232,8 @@ Project processing options can also be specified in a configuration file:
     "file-pattern": "*.js",
     "include-comments": true,
     "compress": true,
-    "chunk-size": 1000
+    "chunk-size": 1000,
+    "folder-output-level": 1
   },
   "include": ["./src/", "./lib/"]
 }
@@ -215,6 +256,31 @@ This command will:
 2. Exclude node_modules, build, and public directories
 3. Generate a consolidated file with the project structure and code content
 
+### Example: Generating Per-Module Documentation
+
+```bash
+# Generate separate documentation for each module in a project
+llm-prepare --project-path ./my-project --folder-output-level 1 --output README.md --prompt templates/simple/README/module-readme.md
+```
+
+This command will:
+1. Process each direct subdirectory of the project
+2. Apply the specified prompt template to each directory's content
+3. Generate a README.md file in each subdirectory with focused documentation
+
+### Example: Comprehensive Project Documentation
+
+```bash
+# Generate documentation for all subdirectories in a project
+llm-prepare --project-path ./my-project --folder-output-level all --output README.md --prompt templates/simple/README/module-readme.md
+```
+
+This command will:
+1. Process every subdirectory in the project that contains matching files
+2. Apply the specified prompt template to each directory's content
+3. Generate a README.md file in each subdirectory with focused documentation
+4. Create a comprehensive documentation structure throughout the entire project
+
 ## Prompt Templates
 
 Prompt templates support variable substitution using `{{variable}}` syntax. The input text is automatically available as `{{text}}` or `{{content}}`.
@@ -226,7 +292,7 @@ SYSTEM: You are a {{model}} AI assistant that is an expert in {{task}}.
 
 USER: {{text}}
 
-ASSISTANT: Understood. I will complete the {{task}}.
+A: Understood. I will complete the {{task}}.
 ```
 
 ## Configuration Files
