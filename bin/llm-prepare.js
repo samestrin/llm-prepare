@@ -51,7 +51,7 @@ async function runCli() {
     .option('--show-default-ignore', 'Display the default ignore patterns')
     .option('--show-templates', 'Show available templates in your browser')
     .option('--chunk-size <kilobytes>', 'Maximum size in KB for each output file (creates multiple files if needed)', parseInt)
-    .option('--folder-output-level <depth>', 'Generate output files at the specified directory depth level', parseInt)
+    .option('--folder-output-level <depth>', 'Generate output files at the specified directory depth level or for all subdirectories (number or "all")')
     .parse(process.argv);
 
   let options = program.opts();
@@ -82,10 +82,16 @@ async function runCli() {
       process.exit(1);
     }
     
-    // Ensure folderOutputLevel is a non-negative integer
-    if (isNaN(options.folderOutputLevel) || options.folderOutputLevel < 0) {
-      console.error('Error: --folder-output-level must be a non-negative integer.');
-      process.exit(1);
+    // Handle both numeric and 'all' values for folderOutputLevel
+    if (options.folderOutputLevel !== 'all') {
+      // Parse as integer if not 'all'
+      options.folderOutputLevel = parseInt(options.folderOutputLevel, 10);
+      
+      // Ensure folderOutputLevel is a non-negative integer
+      if (isNaN(options.folderOutputLevel) || options.folderOutputLevel < 0) {
+        console.error('Error: --folder-output-level must be a non-negative integer or "all".');
+        process.exit(1);
+      }
     }
   }
   
