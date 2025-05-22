@@ -41,6 +41,7 @@
 	  "html-to-text": "^9.0.5",
 	  "ignore": "^5.2.4",	  
 	  "markdown-it": "^13.0.1",	  
+	  "open": "^9.1.0",
 	  "puppeteer": "^21.4.1",
 	  "turndown": "^7.1.2"
 	},

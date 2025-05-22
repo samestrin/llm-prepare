@@ -49,6 +49,7 @@ async function runCli() {
     .option('--custom-ignore-filename <filepath>', 'Path to a custom ignore file')
     .option('--default-ignore <filepath>', 'Path to a default ignore file')
     .option('--show-default-ignore', 'Display the default ignore patterns')
+    .option('--show-templates', 'Show available templates in your browser')
     .option('--chunk-size <kilobytes>', 'Maximum size in KB for each output file (creates multiple files if needed)', parseInt)
     .parse(process.argv);
 
@@ -78,6 +79,22 @@ async function runCli() {
     console.log('Default ignore patterns:');
     console.log(getDefaultIgnorePatterns().join('\n'));
     process.exit(0);
+  }
+  
+  // Show templates in browser if requested
+  if (options.showTemplates) {
+    try {
+      const open = (await import('open')).default;
+      await open('https://github.com/samestrin/llm-prepare/blob/main/templates/README.md');
+      console.log('Opening templates documentation in your browser...');
+      process.exit(0);
+    } catch (error) {
+      console.error('Error opening browser:', error.message);
+      if (options.debug) {
+        console.error(error.stack);
+      }
+      process.exit(1);
+    }
   }
   
   // Run the main processing with the merged options
