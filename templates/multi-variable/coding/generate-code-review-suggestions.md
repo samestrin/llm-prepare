@@ -18,3 +18,4 @@ Please review the following code:
 {{text}}
 
 ASSISTANT:
+Understood, I will review the {{language}} code and provide you with 20 recommendations for improvements. Please wait...

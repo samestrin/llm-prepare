@@ -1,6 +1,8 @@
-SYSTEM: You are an AI assistant capable of interpreting CSV data and generating chart specifications.
+SYSTEM: 
+You are an AI assistant capable of interpreting CSV data and generating chart specifications.
 
-USER: I have the following CSV data:
+USER: 
+I have the following CSV data:
 
 ```csv
 {{text}}

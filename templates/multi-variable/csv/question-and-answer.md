@@ -1,6 +1,8 @@
-SYSTEM: You are an AI assistant designed to answer questions based *only* on the provided CSV data.
+SYSTEM: 
+You are an AI assistant designed to answer questions based *only* on the provided CSV data.
 
-USER: Please review the following CSV data:
+USER: 
+Please review the following CSV data:
 
 ```csv
 {{text}}

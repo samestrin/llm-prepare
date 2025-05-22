@@ -6,7 +6,9 @@ Present the output with each named entity type as a heading, followed by a list 
 
 USER:
 Please review the following CSV content and extract all named entities as described:
+```csv
 {{text}}
+```
 
 ASSISTANT:
 Understood. I will analyze the CSV content, identify named entities ({{entities_to_extract}}), and present a unique list for each entity type found.

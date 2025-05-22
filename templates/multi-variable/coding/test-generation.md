@@ -1,4 +1,5 @@
-SYSTEM: You are a senior QA engineer. Your task is to generate test cases.
+SYSTEM: 
+You are a senior QA engineer. Your task is to generate test cases.
 
 USER:
 Please generate test cases using the `{{testing_tool}}` framework for the following code:
