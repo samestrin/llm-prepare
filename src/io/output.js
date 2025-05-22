@@ -19,24 +19,62 @@ export async function writeOutput(text, outputPath, chunkSize = null) {
     return;
   }
   
+  // Validate parameters
+  if (typeof text !== 'string') {
+    throw new Error('Invalid text parameter: must be a string');
+  }
+  
+  if (chunkSize !== null && (typeof chunkSize !== 'number' || chunkSize <= 0)) {
+    throw new Error(`Invalid chunk size: ${chunkSize}. Must be a positive number.`);
+  }
+  
+  // Ensure the output directory exists
+  try {
+    await fs.mkdir(path.dirname(outputPath), { recursive: true });
+  } catch (error) {
+    // Handle specific error codes
+    if (error.code === 'EEXIST') {
+      // Directory already exists, continue
+    } else if (error.code === 'EACCES') {
+      throw new Error(`Permission denied: Cannot create directory for ${outputPath}. Check file permissions.`);
+    } else if (error.code === 'ENAMETOOLONG') {
+      throw new Error(`Path too long: ${outputPath}. Try using a shorter output path.`);
+    } else {
+      throw new Error(`Failed to create directory for ${outputPath}: ${error.message} (${error.code})`);
+    }
+  }
+  
   // If no chunking needed, write directly to the file
   if (!chunkSize) {
     try {
       await fs.writeFile(outputPath, text, 'utf8');
     } catch (error) {
-      throw new Error(`Failed to write to file ${outputPath}: ${error.message}`);
+      // Handle specific error codes
+      if (error.code === 'EACCES') {
+        throw new Error(`Permission denied: Cannot write to ${outputPath}. Check file permissions.`);
+      } else if (error.code === 'ENOSPC') {
+        throw new Error(`No space left on device: Cannot write to ${outputPath}. Free up disk space.`);
+      } else if (error.code === 'ENAMETOOLONG') {
+        throw new Error(`Path too long: ${outputPath}. Try using a shorter output path.`);
+      } else {
+        throw new Error(`Failed to write to file ${outputPath}: ${error.message} (${error.code})`);
+      }
     }
     return;
   }
 
-  // Handle chunked output
+  // Handle chunked output with improved error handling
   try {
     const chunkSizeBytes = chunkSize * 1024; // Convert KB to bytes
     const totalBytes = Buffer.byteLength(text, 'utf8');
     
     // If content is smaller than chunk size, write directly
     if (totalBytes <= chunkSizeBytes) {
-      await fs.writeFile(outputPath, text, 'utf8');
+      try {
+        await fs.writeFile(outputPath, text, 'utf8');
+      } catch (error) {
+        handleFileWriteError(error, outputPath);
+      }
       return;
     }
     
@@ -48,10 +86,52 @@ export async function writeOutput(text, outputPath, chunkSize = null) {
     // Write each chunk to a separate file
     for (let i = 0; i < chunks.length; i++) {
       const chunkFileName = `${baseName}_part${i + 1}${fileExt}`;
-      await fs.writeFile(chunkFileName, chunks[i], 'utf8');
+      try {
+        await fs.writeFile(chunkFileName, chunks[i], 'utf8');
+      } catch (error) {
+        throw new Error(`Failed to write chunk ${i + 1} to ${chunkFileName}: ${handleFileWriteError(error, chunkFileName, true)}`);
+      }
     }
   } catch (error) {
     throw new Error(`Failed to write chunked output: ${error.message}`);
+  }
+}
+
+/**
+ * Helper function to handle file write errors with specific messages
+ * @param {Error} error - The error object
+ * @param {string} filePath - Path to the file being written
+ * @param {boolean} returnMessage - Whether to return the error message instead of throwing
+ * @throws {Error} - Throws an error with a specific message based on the error code
+ * @returns {string} - Returns the error message if returnMessage is true
+ */
+function handleFileWriteError(error, filePath, returnMessage = false) {
+  let message;
+  
+  switch (error.code) {
+    case 'EACCES':
+      message = `Permission denied: Cannot write to ${filePath}. Check file permissions.`;
+      break;
+    case 'ENOSPC':
+      message = `No space left on device: Cannot write to ${filePath}. Free up disk space.`;
+      break;
+    case 'ENAMETOOLONG':
+      message = `Path too long: ${filePath}. Try using a shorter output path.`;
+      break;
+    case 'EISDIR':
+      message = `Cannot write to ${filePath} because it is a directory. Specify a file path instead.`;
+      break;
+    case 'ENOENT':
+      message = `Cannot write to ${filePath} because a component of the path does not exist.`;
+      break;
+    default:
+      message = `Failed to write to file ${filePath}: ${error.message} (${error.code})`;
+  }
+  
+  if (returnMessage) {
+    return message;
+  } else {
+    throw new Error(message);
   }
 }
 

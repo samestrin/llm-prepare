@@ -60,170 +60,145 @@ export async function processText(options) {
     // Handle per-folder output mode
     if (options.folderOutputLevel !== undefined) {
       if (debug) {
-        console.error(`Debug: Processing in per-folder mode at depth level ${options.folderOutputLevel}`);
+        console.error(`Debug: Processing in per-folder mode at level ${options.folderOutputLevel}`);
       }
       
-      // Result is an array of { directoryPath, content, outputFilename } objects
-      if (Array.isArray(result)) {
-        if (result.length === 0) {
-          console.warn(`Warning: No directories found at depth level ${options.folderOutputLevel} or no files to process.`);
-          return;
-        }
-        
-        // Process each folder's content
-        for (const item of result) {
-          let processedContent = item.content;
+      try {
+        // Result is an array of { directoryPath, content, outputFilename } objects
+        if (Array.isArray(result)) {
+          if (result.length === 0) {
+            console.warn(`Warning: No directories found at depth level ${options.folderOutputLevel} or no files to process.`);
+            return;
+          }
           
-          // Apply prompt template if specified
-          if (options.prompt) {
-            const variables = options.variables 
-              ? JSON.parse(options.variables) 
-              : {};
-            
-            processedContent = await applyPromptTemplate(processedContent, options.prompt, variables);
-            
-            if (debug) {
-              console.error(`Debug: After applying prompt template for ${item.directoryPath}: ${processedContent.length} characters`);
+          let successCount = 0;
+          
+          // Process each folder's content
+          for (const item of result) {
+            try {
+              let processedContent = item.content;
+              
+              // Apply prompt template if specified
+              if (options.prompt) {
+                try {
+                  const variables = options.variables 
+                    ? JSON.parse(options.variables) 
+                    : {};
+                  
+                  processedContent = await applyPromptTemplate(processedContent, options.prompt, variables);
+                  
+                  if (debug) {
+                    console.error(`Debug: After applying prompt template for ${item.directoryPath}: ${processedContent.length} characters`);
+                  }
+                } catch (templateError) {
+                  console.error(`Error applying prompt template for ${item.directoryPath}: ${templateError.message}`);
+                  // Continue with unprocessed content
+                }
+              }
+              
+              // Add system message if specified
+              if (options.system) {
+                processedContent = `SYSTEM: ${options.system}\n\n${processedContent}`;
+              }
+              
+              // Add user message if specified
+              if (options.user) {
+                processedContent = `${processedContent}\n\nUSER: ${options.user}`;
+              }
+              
+              // Truncate text if max tokens specified
+              if (options.maxTokens) {
+                try {
+                  const strategy = options.truncate || 'end';
+                  const beforeTokens = estimateTokenCount(processedContent);
+                  
+                  processedContent = truncateText(
+                    processedContent, 
+                    options.maxTokens, 
+                    strategy
+                  );
+                  
+                  const afterTokens = estimateTokenCount(processedContent);
+                  
+                  if (debug) {
+                    console.error(`Debug: Truncated ${item.directoryPath} from ~${beforeTokens} to ~${afterTokens} tokens`);
+                  }
+                } catch (truncateError) {
+                  console.error(`Error truncating content for ${item.directoryPath}: ${truncateError.message}`);
+                  // Continue with untruncated content
+                }
+              }
+              
+              // Compress text if compress option is specified
+              if (options.compress) {
+                try {
+                  const beforeLength = processedContent.length;
+                  processedContent = compressText(processedContent);
+                  
+                  if (debug) {
+                    console.error(`Debug: Compressed ${item.directoryPath} from ${beforeLength} to ${processedContent.length} characters`);
+                  }
+                } catch (compressError) {
+                  console.error(`Error compressing content for ${item.directoryPath}: ${compressError.message}`);
+                  // Continue with uncompressed content
+                }
+              }
+              
+              // Construct full output path
+              const fullOutputPath = path.join(item.directoryPath, item.outputFilename);
+              
+              // Ensure the directory exists before writing
+              try {
+                await fs.mkdir(path.dirname(fullOutputPath), { recursive: true });
+              } catch (mkdirError) {
+                if (mkdirError.code === 'EEXIST') {
+                  // Directory already exists, continue
+                } else if (mkdirError.code === 'EACCES') {
+                  throw new Error(`Permission denied: Cannot create directory for ${fullOutputPath}. Check file permissions.`);
+                } else if (mkdirError.code === 'ENAMETOOLONG') {
+                  throw new Error(`Path too long: ${fullOutputPath}. Try using a shorter output path.`);
+                } else {
+                  throw new Error(`Failed to create directory for ${fullOutputPath}: ${mkdirError.message} (${mkdirError.code})`);
+                }
+              }
+              
+              // Write output
+              try {
+                await writeOutput(processedContent, fullOutputPath, options.chunkSize);
+                
+                if (debug) {
+                  console.error(`Debug: Wrote output to ${fullOutputPath}`);
+                }
+                
+                successCount++;
+              } catch (writeError) {
+                console.error(`Error writing output to ${fullOutputPath}: ${writeError.message}`);
+              }
+            } catch (itemError) {
+              console.error(`Error processing output for directory ${item.directoryPath}: ${itemError.message}`);
+              // Continue with other directories
             }
           }
           
-          // Add system message if specified
-          if (options.system) {
-            processedContent = `SYSTEM: ${options.system}\n\n${processedContent}`;
+          if (successCount === 0) {
+            console.error(`Error: Failed to generate any output files. Check permissions and disk space.`);
+          } else if (successCount < result.length) {
+            console.warn(`Warning: Successfully generated ${successCount} out of ${result.length} output files.`);
+          } else if (debug) {
+            console.error(`Debug: Successfully generated all ${successCount} output files.`);
           }
-          
-          // Add user message if specified
-          if (options.user) {
-            processedContent = `${processedContent}\n\nUSER: ${options.user}`;
-          }
-          
-          // Truncate text if max tokens specified
-          if (options.maxTokens) {
-            const strategy = options.truncate || 'end';
-            const beforeTokens = estimateTokenCount(processedContent);
-            
-            processedContent = truncateText(
-              processedContent, 
-              options.maxTokens, 
-              strategy
-            );
-            
-            const afterTokens = estimateTokenCount(processedContent);
-            
-            if (debug) {
-              console.error(`Debug: Truncated ${item.directoryPath} from ~${beforeTokens} to ~${afterTokens} tokens`);
-            }
-          }
-          
-          // Compress text if compress option is specified
-          if (options.compress) {
-            const beforeLength = processedContent.length;
-            processedContent = compressText(processedContent);
-            
-            if (debug) {
-              console.error(`Debug: Compressed ${item.directoryPath} from ${beforeLength} to ${processedContent.length} characters`);
-            }
-          }
-          
-          // Construct full output path
-          const fullOutputPath = path.join(item.directoryPath, item.outputFilename);
-          
-          // Ensure the directory exists before writing
-          try {
-            await fs.mkdir(path.dirname(fullOutputPath), { recursive: true });
-          } catch (error) {
-            if (error.code !== 'EEXIST') {
-              throw new Error(`Failed to create directory for output: ${error.message}`);
-            }
-          }
-          
-          // Write output
-          await writeOutput(processedContent, fullOutputPath, options.chunkSize);
-          
-          if (debug) {
-            console.error(`Debug: Wrote output to ${fullOutputPath}`);
-          }
+        } else {
+          throw new Error('Expected array result from processProjectDirectory when using folderOutputLevel');
         }
-        
-        if (debug) {
-          console.error(`Debug: Completed processing ${result.length} directories at depth level ${options.folderOutputLevel}`);
-        }
-      } else {
-        throw new Error('Expected array result from processProjectDirectory when using folderOutputLevel');
+        return;
+      } catch (error) {
+        console.error(`Error in per-folder output mode: ${error.message}`);
+        throw error;
       }
-    } else {
-      // Standard single output processing
-      let processedText = result;
-      
-      if (debug) {
-        console.error(`Debug: Processed project directory: ${options.projectPath}`);
-        console.error(`Debug: Generated ${processedText.length} characters of content`);
-      }
-      
-      // Apply prompt template if specified
-      if (options.prompt) {
-        const variables = options.variables 
-          ? JSON.parse(options.variables) 
-          : {};
-        
-        processedText = await applyPromptTemplate(processedText, options.prompt, variables);
-        
-        if (debug) {
-          console.error(`Debug: After applying prompt template: ${processedText.length} characters`);
-        }
-      }
-      
-      // Add system message if specified
-      if (options.system) {
-        processedText = `SYSTEM: ${options.system}\n\n${processedText}`;
-      }
-      
-      // Add user message if specified
-      if (options.user) {
-        processedText = `${processedText}\n\nUSER: ${options.user}`;
-      }
-      
-      // Truncate text if max tokens specified
-      if (options.maxTokens) {
-        const strategy = options.truncate || 'end';
-        const beforeTokens = estimateTokenCount(processedText);
-        
-        processedText = truncateText(
-          processedText, 
-          options.maxTokens, 
-          strategy
-        );
-        
-        const afterTokens = estimateTokenCount(processedText);
-        
-        if (debug) {
-          console.error(`Debug: Truncated from ~${beforeTokens} to ~${afterTokens} tokens`);
-        }
-      }
-      
-      // Compress text if compress option is specified
-      if (options.compress) {
-        const beforeLength = processedText.length;
-        processedText = compressText(processedText);
-        
-        if (debug) {
-          console.error(`Debug: Compressed from ${beforeLength} to ${processedText.length} characters`);
-        }
-      }
-      
-      // Write output
-      await writeOutput(processedText, options.output, options.chunkSize);
-      
-      if (debug) {
-        console.error('Debug: Processing complete');
-        if (options.chunkSize && options.output) {
-          const textSizeKB = Math.round(Buffer.byteLength(processedText, 'utf8') / 1024);
-          if (textSizeKB > options.chunkSize) {
-            const numChunks = Math.ceil(textSizeKB / options.chunkSize);
-            console.error(`Debug: Output split into ${numChunks} chunks based on ${options.chunkSize}KB limit`);
-          }
-        }
-      }
+    }
+    
+    if (debug) {
+      console.error(`Debug: Completed processing ${result.length} directories at depth level ${options.folderOutputLevel}`);
     }
   } else {
     // Standard input processing (not project directory)

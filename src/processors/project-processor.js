@@ -125,88 +125,126 @@ async function processByFolderLevel(projectPath, allFiles, targetDepthOrAll, opt
   // Get directories based on the specified depth or 'all'
   let targetDirs = [];
   
-  if (targetDepthOrAll === 'all') {
-    targetDirs = getAllSubdirectories(projectPath, allFiles);
-    
-    if (debug) {
-      console.error(`Debug: Found ${targetDirs.length} subdirectories for 'all' mode`);
-      if (targetDirs.length > 0 && targetDirs.length <= 10) {
-        console.error(`Debug: Target directories: ${targetDirs.join(', ')}`);
-      } else if (targetDirs.length > 10) {
-        console.error(`Debug: First 10 target directories: ${targetDirs.slice(0, 10).join(', ')}...`);
+  try {
+    if (targetDepthOrAll === 'all') {
+      targetDirs = getAllSubdirectories(projectPath, allFiles);
+      
+      if (debug) {
+        console.error(`Debug: Found ${targetDirs.length} subdirectories for 'all' mode`);
+        if (targetDirs.length > 0 && targetDirs.length <= 10) {
+          console.error(`Debug: Target directories: ${targetDirs.join(', ')}`);
+        } else if (targetDirs.length > 10) {
+          console.error(`Debug: First 10 target directories: ${targetDirs.slice(0, 10).join(', ')}...`);
+        }
+      }
+      
+      if (targetDirs.length === 0) {
+        console.warn(`Warning: No processable subdirectories found in ${projectPath}.`);
+        return [];
+      }
+    } else {
+      // Validate that targetDepthOrAll is a non-negative integer
+      const targetDepth = parseInt(targetDepthOrAll, 10);
+      if (isNaN(targetDepth) || targetDepth < 0) {
+        throw new Error(`Invalid folder output level: ${targetDepthOrAll}. Must be a non-negative integer or 'all'.`);
+      }
+      
+      // Original numeric depth behavior
+      targetDirs = getDirectoriesAtDepth(projectPath, allFiles, targetDepth);
+      
+      if (debug) {
+        console.error(`Debug: Found ${targetDirs.length} directories at depth ${targetDepth}`);
+        if (targetDirs.length > 0) {
+          console.error(`Debug: Target directories: ${targetDirs.join(', ')}`);
+        }
+      }
+      
+      if (targetDirs.length === 0) {
+        console.warn(`Warning: No directories found at depth level ${targetDepth} in ${projectPath}.`);
+        return [];
       }
     }
-    
-    if (targetDirs.length === 0) {
-      console.warn(`Warning: No processable subdirectories found.`);
-      return [];
-    }
-  } else {
-    // Original numeric depth behavior
-    targetDirs = getDirectoriesAtDepth(projectPath, allFiles, targetDepthOrAll);
-    
-    if (debug) {
-      console.error(`Debug: Found ${targetDirs.length} directories at depth ${targetDepthOrAll}`);
-      console.error(`Debug: Target directories: ${targetDirs.join(', ')}`);
-    }
-    
-    if (targetDirs.length === 0) {
-      console.warn(`Warning: No directories found at depth level ${targetDepthOrAll}`);
-      return [];
-    }
+  } catch (error) {
+    console.error(`Error identifying target directories: ${error.message}`);
+    throw error; // Re-throw to allow higher-level error handling
   }
   
   // Process each target directory
   const results = [];
+  let processedDirCount = 0;
   
   for (const dirPath of targetDirs) {
-    // Filter files to only include those in this directory and its subdirectories
-    const dirFiles = allFiles.filter(file => {
-      const relativePath = path.relative(projectPath, file);
-      return relativePath.startsWith(dirPath);
-    });
-    
-    if (dirFiles.length === 0) {
-      if (debug) {
-        console.warn(`Warning: No matching files found in directory: ${dirPath}. Skipping output for this directory.`);
+    try {
+      // Filter files to only include those in this directory and its subdirectories
+      const dirFiles = allFiles.filter(file => {
+        const relativePath = path.relative(projectPath, file);
+        return relativePath.startsWith(dirPath === '.' ? '' : dirPath);
+      });
+      
+      if (dirFiles.length === 0) {
+        console.warn(`Warning: No matching files found in directory: ${dirPath || 'root'}. Skipping output for this directory.`);
+        continue;
       }
-      continue;
-    }
-    
-    // Generate content for this directory
-    let dirContent = '';
-    
-    // Generate layout view for this directory if not suppressed
-    if (!suppressLayout) {
-      // For layout generation, we need to adjust the projectPath to be the target directory
-      const fullDirPath = path.join(projectPath, dirPath);
-      dirContent += generateLayoutView(fullDirPath, dirFiles) + '\n\n';
-    }
-    
-    // Process each file in this directory
-    for (const file of dirFiles) {
-      const relativePath = path.relative(projectPath, file);
-      const content = await fs.readFile(file, 'utf8');
       
-      // Process content based on options (handle comments)
-      const processedContent = includeComments 
-        ? content 
-        : removeComments(content, file);
+      // Generate content for this directory
+      let dirContent = '';
       
-      // Get dynamic comment style for file header based on file type
-      const headerCommentStyle = commentStyle || getFileHeaderCommentStyle(file);
+      // Generate layout view for this directory if not suppressed
+      if (!suppressLayout) {
+        try {
+          // For layout generation, we need to adjust the projectPath to be the target directory
+          const fullDirPath = path.join(projectPath, dirPath);
+          dirContent += generateLayoutView(fullDirPath, dirFiles) + '\n\n';
+        } catch (layoutError) {
+          console.warn(`Warning: Failed to generate layout for directory ${dirPath}: ${layoutError.message}`);
+          // Continue without layout if it fails
+        }
+      }
       
-      // Add file header with the appropriate comment style
-      dirContent += `${headerCommentStyle} FILE: ${relativePath}\n`;
-      dirContent += processedContent + '\n\n';
+      // Process each file in this directory
+      for (const file of dirFiles) {
+        try {
+          const relativePath = path.relative(projectPath, file);
+          const content = await fs.readFile(file, 'utf8');
+          
+          // Process content based on options (handle comments)
+          const processedContent = includeComments 
+            ? content 
+            : removeComments(content, file);
+          
+          // Get dynamic comment style for file header based on file type
+          const headerCommentStyle = commentStyle || getFileHeaderCommentStyle(file);
+          
+          // Add file header with the appropriate comment style
+          dirContent += `${headerCommentStyle} FILE: ${relativePath}\n`;
+          dirContent += processedContent + '\n\n';
+        } catch (fileError) {
+          // Log error but continue with other files
+          console.warn(`Warning: Failed to process file ${file}: ${fileError.message}`);
+        }
+      }
+      
+      // Add this directory's result to the output array
+      results.push({
+        directoryPath: path.join(projectPath, dirPath === '.' ? '' : dirPath),
+        content: dirContent,
+        outputFilename
+      });
+      
+      processedDirCount++;
+      
+    } catch (dirError) {
+      console.warn(`Warning: Failed to process directory ${dirPath}: ${dirError.message}`);
+      // Continue with other directories
     }
-    
-    // Add this directory's result to the output array
-    results.push({
-      directoryPath: path.join(projectPath, dirPath),
-      content: dirContent,
-      outputFilename
-    });
+  }
+  
+  if (debug) {
+    console.error(`Debug: Successfully processed ${processedDirCount} out of ${targetDirs.length} directories`);
+  }
+  
+  if (processedDirCount === 0 && targetDirs.length > 0) {
+    console.warn(`Warning: Failed to process any directories. Check file permissions and patterns.`);
   }
   
   return results;
@@ -219,41 +257,55 @@ async function processByFolderLevel(projectPath, allFiles, targetDepthOrAll, opt
  * @returns {string[]} - Array of all subdirectory paths containing files
  */
 function getAllSubdirectories(projectPath, allFiles) {
+  if (!Array.isArray(allFiles) || allFiles.length === 0) {
+    return [];
+  }
+  
   // Set to store unique directory paths
   const allDirs = new Set();
   
-  // Always include the root directory if it contains files directly
-  const rootFiles = allFiles.filter(file => {
-    const relativePath = path.relative(projectPath, file);
-    return !relativePath.includes(path.sep);
-  });
-  
-  if (rootFiles.length > 0) {
-    allDirs.add('.');
-  }
-  
-  // Process each file to extract all directory paths
-  allFiles.forEach(file => {
-    const relativePath = path.relative(projectPath, file);
-    const dirPath = path.dirname(relativePath);
+  try {
+    // Always include the root directory if it contains files directly
+    const rootFiles = allFiles.filter(file => {
+      const relativePath = path.relative(projectPath, file);
+      return !relativePath.includes(path.sep);
+    });
     
-    // Skip the root directory as it's already handled
-    if (dirPath !== '.') {
-      allDirs.add(dirPath);
-      
-      // Also add all parent directories
-      let parentDir = dirPath;
-      while (parentDir !== '.') {
-        parentDir = path.dirname(parentDir);
-        if (parentDir !== '.') {
-          allDirs.add(parentDir);
-        }
-      }
+    if (rootFiles.length > 0) {
+      allDirs.add('.');
     }
-  });
-  
-  // Convert Set to Array and sort for consistent output
-  return Array.from(allDirs).sort();
+    
+    // Process each file to extract all directory paths
+    allFiles.forEach(file => {
+      try {
+        const relativePath = path.relative(projectPath, file);
+        const dirPath = path.dirname(relativePath);
+        
+        // Skip the root directory as it's already handled
+        if (dirPath !== '.') {
+          allDirs.add(dirPath);
+          
+          // Also add all parent directories
+          let parentDir = dirPath;
+          while (parentDir !== '.') {
+            parentDir = path.dirname(parentDir);
+            if (parentDir !== '.') {
+              allDirs.add(parentDir);
+            }
+          }
+        }
+      } catch (error) {
+        // Log but continue with other files
+        console.warn(`Warning: Failed to process path for file ${file}: ${error.message}`);
+      }
+    });
+    
+    // Convert Set to Array and sort for consistent output
+    return Array.from(allDirs).sort();
+  } catch (error) {
+    console.error(`Error identifying subdirectories: ${error.message}`);
+    throw error;
+  }
 }
 
 /**
@@ -264,30 +316,48 @@ function getAllSubdirectories(projectPath, allFiles) {
  * @returns {string[]} - Array of directory paths at the specified depth
  */
 function getDirectoriesAtDepth(projectPath, allFiles, targetDepth) {
+  if (!Array.isArray(allFiles) || allFiles.length === 0) {
+    return [];
+  }
+  
+  if (typeof targetDepth !== 'number' || targetDepth < 0) {
+    throw new Error(`Invalid target depth: ${targetDepth}. Must be a non-negative integer.`);
+  }
+  
   // Set to store unique directory paths at the target depth
   const targetDirs = new Set();
   
-  // Process each file to extract directories at the target depth
-  allFiles.forEach(file => {
-    const relativePath = path.relative(projectPath, file);
-    const pathParts = relativePath.split(path.sep);
+  try {
+    // Process each file to extract directories at the target depth
+    allFiles.forEach(file => {
+      try {
+        const relativePath = path.relative(projectPath, file);
+        const pathParts = relativePath.split(path.sep);
+        
+        // If the file is at a depth greater than or equal to the target depth
+        // we can extract the directory at the target depth
+        if (pathParts.length > targetDepth) {
+          // Get the directory path at the target depth
+          const targetDir = pathParts.slice(0, targetDepth).join(path.sep);
+          targetDirs.add(targetDir);
+        }
+      } catch (error) {
+        // Log but continue with other files
+        console.warn(`Warning: Failed to process path for file ${file}: ${error.message}`);
+      }
+    });
     
-    // If the file is at a depth greater than or equal to the target depth
-    // we can extract the directory at the target depth
-    if (pathParts.length > targetDepth) {
-      // Get the directory path at the target depth
-      const targetDir = pathParts.slice(0, targetDepth).join(path.sep);
-      targetDirs.add(targetDir);
+    // Special case: if targetDepth is 0, include the project root
+    if (targetDepth === 0) {
+      targetDirs.add('.');
     }
-  });
-  
-  // Special case: if targetDepth is 0, include the project root
-  if (targetDepth === 0) {
-    targetDirs.add('.');
+    
+    // Convert Set to Array and sort for consistent output
+    return Array.from(targetDirs).sort();
+  } catch (error) {
+    console.error(`Error identifying directories at depth ${targetDepth}: ${error.message}`);
+    throw error;
   }
-  
-  // Convert Set to Array and sort for consistent output
-  return Array.from(targetDirs).sort();
 }
 
 /**
