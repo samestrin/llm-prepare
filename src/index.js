@@ -17,6 +17,8 @@ import { applyPromptTemplate } from './processors/prompt-template.js';
 import { processProjectDirectory } from './processors/project-processor.js';
 import { estimateTokenCount } from './utils/token-counter.js';
 import { compressText } from './processors/compress.js';
+import path from 'path';
+import fs from 'fs/promises';
 
 /**
  * Main function to process text based on provided options
@@ -39,6 +41,7 @@ import { compressText } from './processors/compress.js';
  * @param {string} options.commentStyle - Comment style for file headers
  * @param {boolean} options.compress - Whether to compress whitespace in output
  * @param {number} options.chunkSize - Maximum size in KB for each output file
+ * @param {number} options.folderOutputLevel - Directory depth level for output generation
  * @returns {Promise<void>}
  */
 export async function processText(options) {
@@ -49,18 +52,181 @@ export async function processText(options) {
     console.error('Debug: Processing with options:', JSON.stringify(options, null, 2));
   }
   
-  let processedText;
-  
   // Check if processing a project directory
   if (options.projectPath) {
     // Process project directory
-    processedText = await processProjectDirectory(options);
+    const result = await processProjectDirectory(options);
     
-    if (debug) {
-      console.error(`Debug: Processed project directory: ${options.projectPath}`);
-      console.error(`Debug: Generated ${processedText.length} characters of content`);
+    // Handle per-folder output mode
+    if (options.folderOutputLevel !== undefined) {
+      if (debug) {
+        console.error(`Debug: Processing in per-folder mode at depth level ${options.folderOutputLevel}`);
+      }
+      
+      // Result is an array of { directoryPath, content, outputFilename } objects
+      if (Array.isArray(result)) {
+        if (result.length === 0) {
+          console.warn(`Warning: No directories found at depth level ${options.folderOutputLevel} or no files to process.`);
+          return;
+        }
+        
+        // Process each folder's content
+        for (const item of result) {
+          let processedContent = item.content;
+          
+          // Apply prompt template if specified
+          if (options.prompt) {
+            const variables = options.variables 
+              ? JSON.parse(options.variables) 
+              : {};
+            
+            processedContent = await applyPromptTemplate(processedContent, options.prompt, variables);
+            
+            if (debug) {
+              console.error(`Debug: After applying prompt template for ${item.directoryPath}: ${processedContent.length} characters`);
+            }
+          }
+          
+          // Add system message if specified
+          if (options.system) {
+            processedContent = `SYSTEM: ${options.system}\n\n${processedContent}`;
+          }
+          
+          // Add user message if specified
+          if (options.user) {
+            processedContent = `${processedContent}\n\nUSER: ${options.user}`;
+          }
+          
+          // Truncate text if max tokens specified
+          if (options.maxTokens) {
+            const strategy = options.truncate || 'end';
+            const beforeTokens = estimateTokenCount(processedContent);
+            
+            processedContent = truncateText(
+              processedContent, 
+              options.maxTokens, 
+              strategy
+            );
+            
+            const afterTokens = estimateTokenCount(processedContent);
+            
+            if (debug) {
+              console.error(`Debug: Truncated ${item.directoryPath} from ~${beforeTokens} to ~${afterTokens} tokens`);
+            }
+          }
+          
+          // Compress text if compress option is specified
+          if (options.compress) {
+            const beforeLength = processedContent.length;
+            processedContent = compressText(processedContent);
+            
+            if (debug) {
+              console.error(`Debug: Compressed ${item.directoryPath} from ${beforeLength} to ${processedContent.length} characters`);
+            }
+          }
+          
+          // Construct full output path
+          const fullOutputPath = path.join(item.directoryPath, item.outputFilename);
+          
+          // Ensure the directory exists before writing
+          try {
+            await fs.mkdir(path.dirname(fullOutputPath), { recursive: true });
+          } catch (error) {
+            if (error.code !== 'EEXIST') {
+              throw new Error(`Failed to create directory for output: ${error.message}`);
+            }
+          }
+          
+          // Write output
+          await writeOutput(processedContent, fullOutputPath, options.chunkSize);
+          
+          if (debug) {
+            console.error(`Debug: Wrote output to ${fullOutputPath}`);
+          }
+        }
+        
+        if (debug) {
+          console.error(`Debug: Completed processing ${result.length} directories at depth level ${options.folderOutputLevel}`);
+        }
+      } else {
+        throw new Error('Expected array result from processProjectDirectory when using folderOutputLevel');
+      }
+    } else {
+      // Standard single output processing
+      let processedText = result;
+      
+      if (debug) {
+        console.error(`Debug: Processed project directory: ${options.projectPath}`);
+        console.error(`Debug: Generated ${processedText.length} characters of content`);
+      }
+      
+      // Apply prompt template if specified
+      if (options.prompt) {
+        const variables = options.variables 
+          ? JSON.parse(options.variables) 
+          : {};
+        
+        processedText = await applyPromptTemplate(processedText, options.prompt, variables);
+        
+        if (debug) {
+          console.error(`Debug: After applying prompt template: ${processedText.length} characters`);
+        }
+      }
+      
+      // Add system message if specified
+      if (options.system) {
+        processedText = `SYSTEM: ${options.system}\n\n${processedText}`;
+      }
+      
+      // Add user message if specified
+      if (options.user) {
+        processedText = `${processedText}\n\nUSER: ${options.user}`;
+      }
+      
+      // Truncate text if max tokens specified
+      if (options.maxTokens) {
+        const strategy = options.truncate || 'end';
+        const beforeTokens = estimateTokenCount(processedText);
+        
+        processedText = truncateText(
+          processedText, 
+          options.maxTokens, 
+          strategy
+        );
+        
+        const afterTokens = estimateTokenCount(processedText);
+        
+        if (debug) {
+          console.error(`Debug: Truncated from ~${beforeTokens} to ~${afterTokens} tokens`);
+        }
+      }
+      
+      // Compress text if compress option is specified
+      if (options.compress) {
+        const beforeLength = processedText.length;
+        processedText = compressText(processedText);
+        
+        if (debug) {
+          console.error(`Debug: Compressed from ${beforeLength} to ${processedText.length} characters`);
+        }
+      }
+      
+      // Write output
+      await writeOutput(processedText, options.output, options.chunkSize);
+      
+      if (debug) {
+        console.error('Debug: Processing complete');
+        if (options.chunkSize && options.output) {
+          const textSizeKB = Math.round(Buffer.byteLength(processedText, 'utf8') / 1024);
+          if (textSizeKB > options.chunkSize) {
+            const numChunks = Math.ceil(textSizeKB / options.chunkSize);
+            console.error(`Debug: Output split into ${numChunks} chunks based on ${options.chunkSize}KB limit`);
+          }
+        }
+      }
     }
   } else {
+    // Standard input processing (not project directory)
     // Step 1: Get input text from source (file, URL, stdin)
     const text = await getInputText(options);
     if (debug) {
@@ -68,76 +234,76 @@ export async function processText(options) {
     }
     
     // Step 2: Convert format if specified
-    processedText = options.format 
+    let processedText = options.format 
       ? await convertFormat(text, options.format, options) 
       : text;
     
     if (debug) {
       console.error(`Debug: After format conversion: ${processedText.length} characters`);
     }
-  }
-  
-  // Step 3: Apply prompt template if specified
-  if (options.prompt) {
-    const variables = options.variables 
-      ? JSON.parse(options.variables) 
-      : {};
     
-    processedText = await applyPromptTemplate(processedText, options.prompt, variables);
+    // Step 3: Apply prompt template if specified
+    if (options.prompt) {
+      const variables = options.variables 
+        ? JSON.parse(options.variables) 
+        : {};
+      
+      processedText = await applyPromptTemplate(processedText, options.prompt, variables);
+      
+      if (debug) {
+        console.error(`Debug: After applying prompt template: ${processedText.length} characters`);
+      }
+    }
+    
+    // Step 4: Add system message if specified
+    if (options.system) {
+      processedText = `SYSTEM: ${options.system}\n\n${processedText}`;
+    }
+    
+    // Step 5: Add user message if specified
+    if (options.user) {
+      processedText = `${processedText}\n\nUSER: ${options.user}`;
+    }
+    
+    // Step 6: Truncate text if max tokens specified
+    if (options.maxTokens) {
+      const strategy = options.truncate || 'end';
+      const beforeTokens = estimateTokenCount(processedText);
+      
+      processedText = truncateText(
+        processedText, 
+        options.maxTokens, 
+        strategy
+      );
+      
+      const afterTokens = estimateTokenCount(processedText);
+      
+      if (debug) {
+        console.error(`Debug: Truncated from ~${beforeTokens} to ~${afterTokens} tokens`);
+      }
+    }
+    
+    // Step 7: Compress text if compress option is specified
+    if (options.compress) {
+      const beforeLength = processedText.length;
+      processedText = compressText(processedText);
+      
+      if (debug) {
+        console.error(`Debug: Compressed from ${beforeLength} to ${processedText.length} characters`);
+      }
+    }
+    
+    // Step 8: Write output
+    await writeOutput(processedText, options.output, options.chunkSize);
     
     if (debug) {
-      console.error(`Debug: After applying prompt template: ${processedText.length} characters`);
-    }
-  }
-  
-  // Step 4: Add system message if specified
-  if (options.system) {
-    processedText = `SYSTEM: ${options.system}\n\n${processedText}`;
-  }
-  
-  // Step 5: Add user message if specified
-  if (options.user) {
-    processedText = `${processedText}\n\nUSER: ${options.user}`;
-  }
-  
-  // Step 6: Truncate text if max tokens specified
-  if (options.maxTokens) {
-    const strategy = options.truncate || 'end';
-    const beforeTokens = estimateTokenCount(processedText);
-    
-    processedText = truncateText(
-      processedText, 
-      options.maxTokens, 
-      strategy
-    );
-    
-    const afterTokens = estimateTokenCount(processedText);
-    
-    if (debug) {
-      console.error(`Debug: Truncated from ~${beforeTokens} to ~${afterTokens} tokens`);
-    }
-  }
-  
-  // Step 7: Compress text if compress option is specified
-  if (options.compress) {
-    const beforeLength = processedText.length;
-    processedText = compressText(processedText);
-    
-    if (debug) {
-      console.error(`Debug: Compressed from ${beforeLength} to ${processedText.length} characters`);
-    }
-  }
-  
-  // Step 8: Write output (now with chunk size parameter)
-  await writeOutput(processedText, options.output, options.chunkSize);
-  
-  if (debug) {
-    console.error('Debug: Processing complete');
-    if (options.chunkSize && options.output) {
-      const textSizeKB = Math.round(Buffer.byteLength(processedText, 'utf8') / 1024);
-      if (textSizeKB > options.chunkSize) {
-        const numChunks = Math.ceil(textSizeKB / options.chunkSize);
-        console.error(`Debug: Output split into ${numChunks} chunks based on ${options.chunkSize}KB limit`);
+      console.error('Debug: Processing complete');
+      if (options.chunkSize && options.output) {
+        const textSizeKB = Math.round(Buffer.byteLength(processedText, 'utf8') / 1024);
+        if (textSizeKB > options.chunkSize) {
+          const numChunks = Math.ceil(textSizeKB / options.chunkSize);
+          console.error(`Debug: Output split into ${numChunks} chunks based on ${options.chunkSize}KB limit`);
+        }
       }
     }
   }
