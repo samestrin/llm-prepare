@@ -19,7 +19,7 @@ import { removeComments, getFileHeaderCommentStyle } from '../utils/comment-hand
  * @param {boolean} options.includeComments - Whether to include comments in output
  * @param {string} options.commentStyle - Style for file headers in output
  * @param {boolean} options.debug - Enable debug output
- * @param {number} options.folderOutputLevel - Directory depth level for output generation
+ * @param {number|string} options.folderOutputLevel - Directory depth level for output generation or 'all' for all subdirectories
  * @param {string} options.output - Output filename
  * @returns {Promise<string|Array<Object>>} - Aggregated content from matching files or array of folder outputs
  */
@@ -103,14 +103,14 @@ export async function processProjectDirectory(options) {
 }
 
 /**
- * Process project by folder level, generating separate outputs for each directory at the specified depth
+ * Process project by folder level, generating separate outputs for each directory at the specified depth or for all subdirectories
  * @param {string} projectPath - Root path of the project
  * @param {string[]} allFiles - List of all files in the project
- * @param {number} targetDepth - Target directory depth level
+ * @param {number|string} targetDepthOrAll - Target directory depth level or 'all' for all subdirectories
  * @param {Object} options - Processing options
  * @returns {Promise<Array<Object>>} - Array of objects with directory path, content, and output filename
  */
-async function processByFolderLevel(projectPath, allFiles, targetDepth, options) {
+async function processByFolderLevel(projectPath, allFiles, targetDepthOrAll, options) {
   const {
     suppressLayout = false,
     includeComments = false,
@@ -122,17 +122,38 @@ async function processByFolderLevel(projectPath, allFiles, targetDepth, options)
   // Get the output filename from the output path
   const outputFilename = path.basename(output);
   
-  // Get directories at the specified depth
-  const targetDirs = getDirectoriesAtDepth(projectPath, allFiles, targetDepth);
+  // Get directories based on the specified depth or 'all'
+  let targetDirs = [];
   
-  if (debug) {
-    console.error(`Debug: Found ${targetDirs.length} directories at depth ${targetDepth}`);
-    console.error(`Debug: Target directories: ${targetDirs.join(', ')}`);
-  }
-  
-  if (targetDirs.length === 0) {
-    console.warn(`Warning: No directories found at depth level ${targetDepth}`);
-    return [];
+  if (targetDepthOrAll === 'all') {
+    targetDirs = getAllSubdirectories(projectPath, allFiles);
+    
+    if (debug) {
+      console.error(`Debug: Found ${targetDirs.length} subdirectories for 'all' mode`);
+      if (targetDirs.length > 0 && targetDirs.length <= 10) {
+        console.error(`Debug: Target directories: ${targetDirs.join(', ')}`);
+      } else if (targetDirs.length > 10) {
+        console.error(`Debug: First 10 target directories: ${targetDirs.slice(0, 10).join(', ')}...`);
+      }
+    }
+    
+    if (targetDirs.length === 0) {
+      console.warn(`Warning: No processable subdirectories found.`);
+      return [];
+    }
+  } else {
+    // Original numeric depth behavior
+    targetDirs = getDirectoriesAtDepth(projectPath, allFiles, targetDepthOrAll);
+    
+    if (debug) {
+      console.error(`Debug: Found ${targetDirs.length} directories at depth ${targetDepthOrAll}`);
+      console.error(`Debug: Target directories: ${targetDirs.join(', ')}`);
+    }
+    
+    if (targetDirs.length === 0) {
+      console.warn(`Warning: No directories found at depth level ${targetDepthOrAll}`);
+      return [];
+    }
   }
   
   // Process each target directory
@@ -147,7 +168,7 @@ async function processByFolderLevel(projectPath, allFiles, targetDepth, options)
     
     if (dirFiles.length === 0) {
       if (debug) {
-        console.warn(`Warning: No matching files found in directory: ${dirPath}`);
+        console.warn(`Warning: No matching files found in directory: ${dirPath}. Skipping output for this directory.`);
       }
       continue;
     }
@@ -189,6 +210,50 @@ async function processByFolderLevel(projectPath, allFiles, targetDepth, options)
   }
   
   return results;
+}
+
+/**
+ * Get all subdirectories that contain files matching the patterns
+ * @param {string} projectPath - Root path of the project
+ * @param {string[]} allFiles - List of all files in the project
+ * @returns {string[]} - Array of all subdirectory paths containing files
+ */
+function getAllSubdirectories(projectPath, allFiles) {
+  // Set to store unique directory paths
+  const allDirs = new Set();
+  
+  // Always include the root directory if it contains files directly
+  const rootFiles = allFiles.filter(file => {
+    const relativePath = path.relative(projectPath, file);
+    return !relativePath.includes(path.sep);
+  });
+  
+  if (rootFiles.length > 0) {
+    allDirs.add('.');
+  }
+  
+  // Process each file to extract all directory paths
+  allFiles.forEach(file => {
+    const relativePath = path.relative(projectPath, file);
+    const dirPath = path.dirname(relativePath);
+    
+    // Skip the root directory as it's already handled
+    if (dirPath !== '.') {
+      allDirs.add(dirPath);
+      
+      // Also add all parent directories
+      let parentDir = dirPath;
+      while (parentDir !== '.') {
+        parentDir = path.dirname(parentDir);
+        if (parentDir !== '.') {
+          allDirs.add(parentDir);
+        }
+      }
+    }
+  });
+  
+  // Convert Set to Array and sort for consistent output
+  return Array.from(allDirs).sort();
 }
 
 /**
