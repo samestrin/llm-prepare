@@ -25,14 +25,17 @@ export async function loadConfigFile(filepath) {
  * @returns {object} Merged arguments object.
  */
 export function mergeArguments(cliArgs, configArgs) {
-  // Start with configArgs (if any) and override with cliArgs
-  const mergedArgs = { ...configArgs };
+  // Start with an empty object
+  const mergedArgs = {};
   
   // Process the args property from the config file if it exists
   if (configArgs && configArgs.args) {
     Object.assign(mergedArgs, configArgs.args);
-    // Remove the original args property to flatten the structure
-    delete mergedArgs.args;
+  }
+  
+  // Preserve the include array from the config file if it exists
+  if (configArgs && Array.isArray(configArgs.include)) {
+    mergedArgs.include = [...configArgs.include];
   }
   
   // CLI arguments take precedence, only override non-undefined values
