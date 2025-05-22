@@ -23,7 +23,7 @@ async function runCli() {
   program
     .name('llm-prepare')
     .description('A utility to prepare text for LLM consumption')
-    .version(packageJson.version);
+    .version(packageJson.version, '-v, --version');
 
   program
     .option('-i, --input <source>', 'Input source (file, url, or stdin)')
@@ -31,7 +31,7 @@ async function runCli() {
     .option('-f, --format <format>', 'Format the input (markdown, html, text)')
     .option('-m, --max-tokens <number>', 'Maximum tokens to include', parseInt)
     .option('--prompt <file>', 'Prompt template file')
-    .option('-v, --variables <json>', 'JSON string of variables for the prompt template')
+    .option('--variables <json>', 'JSON string of variables for the prompt template')
     .option('-t, --truncate <strategy>', 'Truncation strategy (start, end, middle)')
     .option('-r, --render', 'Render content with a browser for JavaScript-heavy sites')
     .option('-d, --debug', 'Enable debug output')
