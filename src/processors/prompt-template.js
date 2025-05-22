@@ -48,8 +48,8 @@ function processTemplate(template, variables) {
       return variables[trimmedName];
     }
     
-    // Return the original placeholder if variable not found
-    return match;
+    // Return an empty string if variable not found, effectively stripping it
+    return '';
   });
 }
 
