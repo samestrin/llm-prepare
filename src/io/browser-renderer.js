@@ -50,15 +50,13 @@ export async function renderUrl(url, options = {}) {
 
     // Wait additional time for any final JavaScript execution
     await page.waitForTimeout(waitTime);
-
-    // Get the page content
-    const content = await page.content();
     
-    return content;
+    // Get the page content
+    return await page.content();
   } catch (error) {
-    throw new Error(`Error rendering URL: ${error.message}`);
+    throw new Error(`Failed to render URL with Puppeteer: ${error.message}`);
   } finally {
-    // Ensure browser is closed even if an error occurs
+    // Always close the browser
     if (browser) {
       await browser.close();
     }
