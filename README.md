@@ -69,6 +69,7 @@ llm-prepare --project-path ./my-project --output summary.txt --folder-output-lev
 | `-c, --compress` | Compress output by removing excessive whitespace |
 | `--chunk-size <kilobytes>` | Maximum size in KB for each output file (creates multiple files if needed) |
 | `--folder-output-level <depth>` | Generate output files at the specified directory depth level or for all subdirectories (number or "all") |
+| `-o, --output <file>` | Output file (defaults to stdout) |
 
 ### Per-Folder Output Generation
 
@@ -325,9 +326,18 @@ In-Context Learning (ICL) prompts guide a large language model (LLM) in performi
 - **Relevant Data**: Include any necessary data or background information that helps the model understand the context of the task.
 - **Incremental Guidance**: Sometimes, step-by-step guidance is included to lead the model through complex tasks.
 
-## Contribute
+## Contributing Guidelines
 
-Contributions to this project are welcome. Please fork the repository and submit a pull request with your changes or improvements.
+Contributions are welcome! Please follow these general guidelines:
+
+1.  Fork the repository.
+2.  Create a new branch for your feature or bug fix.
+3.  Write clean, well-documented code.
+4.  Add or update tests for your changes.
+5.  Ensure all tests pass.
+6.  Submit a pull request.
+
+(Detailed contributing guidelines can be found here: [`CONTRIBUTING`](CONTRIBUTING.md))
 
 ## License
 
