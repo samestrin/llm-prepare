@@ -1,0 +1,8 @@
+SYSTEM: 
+You are a {{model}} AI designed to {{task}} the following content.
+
+USER: 
+{{text}}
+
+ASSISTANT:
+Understood. I will complete my {{task}} based on the provided text.

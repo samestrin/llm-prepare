@@ -1,31 +1,53 @@
 {
 	"name": "llm-prepare",
-	"version": "1.0.21",
-	"description": "llm-prepare converts complex project directory structures and files into a single flat file or a set of flat files, facilitating processing using In-Context Learning (ICL) prompts.",
-	"author": "Sam Estrin",
-	"license": "MIT",
-	"bugs": {
-		"url": "https://github.com/samestrin/llm-prepare/issues"
-	},
-	"homepage": "https://github.com/samestrin/llm-prepare#readme",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/samestrin/llm-prepare.git"
-	},
-	"main": "./llm-prepare.js",
-	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1",
-		"llm-prepare": "node ./llm-prepare.js "
-	},
-	"keywords": [],
-	"dependencies": {
-		"fs-extra": "^11.2.0",
-		"ignore": "^5.3.1",
-		"istextorbinary": "^9.5.0",
-		"open": "^10.1.0",
-		"yargs": "^17.7.2"
-	},
+	"version": "2.0.0",
+	"description": "A utility designed to streamline the preparation of diverse text sources for Large Language Model (LLM) consumption. It intelligently flattens project structures, truncating, and formatting for ICL prompts.",
+	"main": "src/index.js",
+	"type": "module",
 	"bin": {
-		"llm-prepare": "./llm-prepare.js"
+	  "llm-prepare": "bin/llm-prepare.js"
+	},
+	"scripts": {
+	  "start": "node bin/llm-prepare.js",
+	  "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+	  "lint": "eslint ."
+	},
+	"keywords": [
+	  "llm",
+	  "prompt",
+	  "text",
+	  "preprocessing",
+	  "ai",
+	  "truncation",
+	  "formatting",
+	  "in-context learning",
+	  "icl",
+	  "node",
+	  "utility",
+	  "data preparation",
+	  "markdown",
+	  "html",
+	  "puppeteer",
+	  "chat"
+	],
+	"author": "",
+	"license": "MIT",
+	"dependencies": {
+	  "axios": "^1.6.0",
+	  "cheerio": "^1.0.0-rc.12",
+	  "commander": "^11.1.0",
+	  "dotenv": "^16.3.1",
+	  "glob": "^10.3.10",
+	  "html-to-text": "^9.0.5",
+	  "ignore": "^5.2.4",	  
+	  "markdown-it": "^13.0.1",	  
+	  "open": "^9.1.0",
+	  "puppeteer": "^21.4.1",
+	  "turndown": "^7.1.2"
+	},
+	"devDependencies": {
+	  "eslint": "^8.52.0",
+	  "eslint-config-google": "^0.14.0",
+	  "jest": "^29.7.0"
 	}
-}
+  }
