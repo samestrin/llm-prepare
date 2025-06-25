@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { program } from 'commander';
+import { Command } from 'commander';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
@@ -20,11 +20,16 @@ const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
  * Configure and run the CLI program
  */
 async function runCli() {
+  // Create a fresh instance of Command
+  const program = new Command();
+  
+  // Configure the program
   program
     .name('llm-prepare')
     .description('A utility to prepare text for LLM consumption')
     .version(packageJson.version, '-v, --version');
 
+  // Define all options
   program
     .option('-i, --input <source>', 'Input source (file, url, or stdin)')
     .option('-o, --output <file>', 'Output file (defaults to stdout)')
@@ -51,8 +56,54 @@ async function runCli() {
     .option('--show-default-ignore', 'Display the default ignore patterns')
     .option('--show-templates', 'Show available templates in your browser')
     .option('--chunk-size <kilobytes>', 'Maximum size in KB for each output file (creates multiple files if needed)', parseInt)
-    .option('--folder-output-level <depth>', 'Generate output files at the specified directory depth level or for all subdirectories (number or "all")')
-    .parse(process.argv);
+    .option('--folder-output-level <depth>', 'Generate output files at the specified directory depth level or for all subdirectories (number or "all")');
+
+  // Check if no arguments were provided
+  if (process.argv.length <= 2) {
+    // Create a new instance of Command just for displaying help
+    // This avoids the duplicate options issue
+    const helpProgram = new Command();
+    helpProgram
+      .name('llm-prepare')
+      .description('A utility to prepare text for LLM consumption')
+      .version(packageJson.version, '-v, --version');
+
+    // Add all options to the help program
+    helpProgram
+      .option('-i, --input <source>', 'Input source (file, url, or stdin)')
+      .option('-o, --output <file>', 'Output file (defaults to stdout)')
+      .option('-f, --format <format>', 'Format the input (markdown, html, text)')
+      .option('-m, --max-tokens <number>', 'Maximum tokens to include', parseInt)
+      .option('--prompt <file>', 'Prompt template file')
+      .option('--variables <json>', 'JSON string of variables for the prompt template')
+      .option('-t, --truncate <strategy>', 'Truncation strategy (start, end, middle)')
+      .option('-r, --render', 'Render content with a browser for JavaScript-heavy sites')
+      .option('-d, --debug', 'Enable debug output')
+      .option('-s, --system <message>', 'System message to prepend')
+      .option('-u, --user <message>', 'User message to append')
+      .option('-c, --compress', 'Compress output by removing excessive whitespace')
+      .option('--config <filepath>', 'Path to the JSON configuration file')
+      .option('-p, --project-path <directoryPath>', 'Path to the project directory to process')
+      .option('--file-pattern <pattern>', 'Glob pattern for matching files (default: *)')
+      .option('--no-layout', 'Suppress the ASCII layout view of the project structure')
+      .option('--include-comments', 'Include comments in the output (default: false)')
+      .option('--comment-style <style>', 'Comment style for file headers (default: //)')
+      .option('--ignore-gitignore', 'Disable processing of .gitignore files')
+      .option('--custom-ignore-string <patterns>', 'Comma-separated ignore patterns')
+      .option('--custom-ignore-filename <filepath>', 'Path to a custom ignore file')
+      .option('--default-ignore <filepath>', 'Path to a default ignore file')
+      .option('--show-default-ignore', 'Display the default ignore patterns')
+      .option('--show-templates', 'Show available templates in your browser')
+      .option('--chunk-size <kilobytes>', 'Maximum size in KB for each output file (creates multiple files if needed)', parseInt)
+      .option('--folder-output-level <depth>', 'Generate output files at the specified directory depth level or for all subdirectories (number or "all")');
+
+    // Display help and exit
+    console.log(helpProgram.helpInformation());
+    process.exit(0);
+  }
+  
+  // Parse arguments
+  program.parse(process.argv);
 
   let options = program.opts();
   
@@ -118,6 +169,8 @@ async function runCli() {
       process.exit(1);
     }
   }
+  
+  // The check for no arguments is now before program.parse()
   
   // Run the main processing with the merged options
   processText(options)
