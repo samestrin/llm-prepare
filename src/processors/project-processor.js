@@ -9,6 +9,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { globSync } from 'glob';
 import { removeComments, getFileHeaderCommentStyle } from '../utils/comment-handler.js';
+import { createIgnoreFilter } from '../utils/ignore-handler.js';
 
 /**
  * Process a project directory and aggregate content from matching files
@@ -55,11 +56,18 @@ export async function processProjectDirectory(options) {
 
   // Find all matching files using glob pattern
   const globPattern = path.join(projectPath, '**', filePattern);
-  const files = globSync(globPattern, { 
+  
+  // Create ignore filter using options
+  const ignoreFilter = createIgnoreFilter(options);
+  
+  // Get all files matching the glob pattern
+  const allFiles = globSync(globPattern, { 
     dot: true,
-    nodir: true,
-    ignore: ['**/node_modules/**', '**/.git/**'] // Default ignores
+    nodir: true
   });
+  
+  // Filter files using the ignore filter
+  const files = allFiles.filter(file => !ignoreFilter(file));
 
   if (debug) {
     console.error(`Debug: Found ${files.length} matching files`);
