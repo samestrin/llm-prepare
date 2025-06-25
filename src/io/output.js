@@ -19,6 +19,7 @@ export async function writeOutput(text, outputPath, chunkSize = null) {
     return;
   }
   
+  
   // Validate parameters
   if (typeof text !== 'string') {
     throw new Error('Invalid text parameter: must be a string');
@@ -30,7 +31,8 @@ export async function writeOutput(text, outputPath, chunkSize = null) {
   
   // Ensure the output directory exists
   try {
-    await fs.mkdir(path.dirname(outputPath), { recursive: true });
+    const dirPath = path.dirname(outputPath);
+    await fs.mkdir(dirPath, { recursive: true });
   } catch (error) {
     // Handle specific error codes
     if (error.code === 'EEXIST') {
