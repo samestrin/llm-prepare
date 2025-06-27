@@ -119,6 +119,12 @@ llm-prepare --project-path ./my-project --custom-ignore-filename .customignore
 
 # Display default ignore patterns
 llm-prepare --show-default-ignore
+
+# Include large files in the output (binary files are still excluded)
+llm-prepare --project-path ./my-project --include-large-files
+
+# Set a custom maximum file size (default is 5MB)
+llm-prepare --project-path ./my-project --max-file-size 10485760
 ```
 
 | Option | Description |
@@ -128,6 +134,8 @@ llm-prepare --show-default-ignore
 | `--custom-ignore-filename <filepath>` | Path to a custom ignore file |
 | `--default-ignore <filepath>` | Path to a default ignore file (overrides built-in defaults) |
 | `--show-default-ignore` | Display the default ignore patterns |
+| `--include-large-files` | Include large files in the output (default: false) |
+| `--max-file-size <bytes>` | Maximum file size in bytes (default: 5MB) |
 
 
 ## Additional Capabilities and General Usage

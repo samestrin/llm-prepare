@@ -56,7 +56,9 @@ async function runCli() {
     .option('--show-default-ignore', 'Display the default ignore patterns')
     .option('--show-templates', 'Show available templates in your browser')
     .option('--chunk-size <kilobytes>', 'Maximum size in KB for each output file (creates multiple files if needed)', parseInt)
-    .option('--folder-output-level <depth>', 'Generate output files at the specified directory depth level or for all subdirectories (number or "all")');
+    .option('--folder-output-level <depth>', 'Generate output files at the specified directory depth level or for all subdirectories (number or "all")')
+    .option('--include-large-files', 'Include large files in the output (default: false)')
+    .option('--max-file-size <bytes>', 'Maximum file size in bytes (default: 5MB)', parseInt);
 
   // Check if no arguments were provided
   if (process.argv.length <= 2) {
@@ -95,7 +97,9 @@ async function runCli() {
       .option('--show-default-ignore', 'Display the default ignore patterns')
       .option('--show-templates', 'Show available templates in your browser')
       .option('--chunk-size <kilobytes>', 'Maximum size in KB for each output file (creates multiple files if needed)', parseInt)
-      .option('--folder-output-level <depth>', 'Generate output files at the specified directory depth level or for all subdirectories (number or "all")');
+      .option('--folder-output-level <depth>', 'Generate output files at the specified directory depth level or for all subdirectories (number or "all")')
+      .option('--include-large-files', 'Include large files in the output (default: false)')
+      .option('--max-file-size <bytes>', 'Maximum file size in bytes (default: 5MB)', parseInt);
 
     // Display help and exit
     console.log(helpProgram.helpInformation());

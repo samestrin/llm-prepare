@@ -10,6 +10,7 @@ import path from 'path';
 import { globSync } from 'glob';
 import { removeComments, getFileHeaderCommentStyle } from '../utils/comment-handler.js';
 import { createIgnoreFilter } from '../utils/ignore-handler.js';
+import { checkIfBinary, isFileTooLarge, generatePlaceholderMessage } from '../utils/file-type-handler.js';
 
 /**
  * Process a project directory and aggregate content from matching files
@@ -22,6 +23,8 @@ import { createIgnoreFilter } from '../utils/ignore-handler.js';
  * @param {boolean} options.debug - Enable debug output
  * @param {number|string} options.folderOutputLevel - Directory depth level for output generation or 'all' for all subdirectories
  * @param {string} options.output - Output filename
+ * @param {boolean} options.includeLargeFiles - Whether to include large files in the output
+ * @param {number} options.maxFileSize - Maximum file size in bytes (default: 5MB)
  * @returns {Promise<string|Array<Object>>} - Aggregated content from matching files or array of folder outputs
  */
 export async function processProjectDirectory(options) {
@@ -33,7 +36,9 @@ export async function processProjectDirectory(options) {
     commentStyle = '//',
     debug = false,
     folderOutputLevel,
-    output
+    output,
+    includeLargeFiles = false,
+    maxFileSize = 5 * 1024 * 1024 // Default 5MB
   } = options;
 
   if (debug) {
@@ -68,6 +73,9 @@ export async function processProjectDirectory(options) {
   
   // Filter files using the ignore filter
   const files = allFiles.filter(file => !ignoreFilter(file));
+  
+  // Note: We don't filter binary or large files here - we'll handle them during processing
+  // by including placeholder messages instead of their content
 
   if (debug) {
     console.error(`Debug: Found ${files.length} matching files`);
@@ -92,19 +100,61 @@ export async function processProjectDirectory(options) {
   // Process each file and aggregate content
   for (const file of files) {
     const relativePath = path.relative(projectPath, file);
-    const content = await fs.readFile(file, 'utf8');
     
-    // Process content based on options (handle comments)
-    const processedContent = includeComments 
-      ? content 
-      : removeComments(content, file);
+    if (debug) {
+      console.error(`Debug: Processing file: ${file}`);
+    }
     
-    // Get dynamic comment style for file header based on file type
-    const headerCommentStyle = commentStyle || getFileHeaderCommentStyle(file);
-    
-    // Add file header with the appropriate comment style
-    singleOutput += `${headerCommentStyle} FILE: ${relativePath}\n`;
-    singleOutput += processedContent + '\n\n';
+    try {
+      // Get file stats for size check
+      const stats = await fs.stat(file);
+      
+      // Check if file is binary
+      const isBinary = await checkIfBinary(file);
+      if (debug) {
+        console.error(`Debug: File ${file} isBinary: ${isBinary}`);
+      }
+      
+      // Check if file is too large
+      const isLarge = !includeLargeFiles && isFileTooLarge(stats.size, maxFileSize);
+      if (debug) {
+        console.error(`Debug: File ${file} isLarge: ${isLarge} (size: ${stats.size}, maxSize: ${maxFileSize})`);
+      }
+      
+      // Get dynamic comment style for file header based on file type
+      const headerCommentStyle = commentStyle || getFileHeaderCommentStyle(file);
+      
+      // Add file header with the appropriate comment style
+      singleOutput += `${headerCommentStyle} FILE: ${relativePath}\n`;
+      
+      // If binary or too large, add placeholder message instead of content
+      if (isBinary || isLarge) {
+        const placeholder = generatePlaceholderMessage(file, isBinary, isLarge, stats.size, commentStyle);
+        singleOutput += placeholder + '\n\n';
+        if (debug) {
+          console.error(`Debug: Added placeholder for ${isBinary ? 'binary' : 'large'} file: ${file}`);
+          console.error(`Debug: Placeholder: ${placeholder}`);
+        }
+      } else {
+        // Read and process the file content
+        const content = await fs.readFile(file, 'utf8');
+        
+        // Process content based on options (handle comments)
+        const processedContent = includeComments 
+          ? content 
+          : removeComments(content, file);
+        
+        singleOutput += processedContent + '\n\n';
+      }
+    } catch (error) {
+      // Handle file reading errors (e.g., encoding issues with binary files)
+      if (debug) {
+        console.error(`Debug: Error processing file ${file}: ${error.message}`);
+      }
+      const headerCommentStyle = commentStyle || getFileHeaderCommentStyle(file);
+      singleOutput += `${headerCommentStyle} FILE: ${relativePath}\n`;
+      singleOutput += `// Error reading file: ${error.message}\n\n`;
+    }
   }
 
   return singleOutput;
